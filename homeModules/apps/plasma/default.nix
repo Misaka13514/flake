@@ -28,7 +28,7 @@ in
             name = "org.kde.plasma.kickoff";
             config = {
               General = {
-                icon = "nix-snowflake";
+                icon = "${assetsPath}/nix-snowflake-transgender.png";
               };
             };
           }
