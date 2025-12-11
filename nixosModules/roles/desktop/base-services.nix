@@ -8,7 +8,7 @@
   # do not need to keep too much generations
   boot.loader.systemd-boot.configurationLimit = lib.mkDefault 10;
 
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.kernelPackages = pkgs.linuxPackages_zen;
 
   boot.kernel.sysctl."kernel.sysrq" = 1;
 

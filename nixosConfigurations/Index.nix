@@ -8,6 +8,7 @@
   imports = with nixosModules; [
     roles.desktop
     gui.suites.plasma
+    gui.steam
     hardware.bluetooth
     users.atri
   ];

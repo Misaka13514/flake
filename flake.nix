@@ -81,17 +81,19 @@
             system = "x86_64-linux";
             unstablePkgs = import inputs.nixpkgs-unstable {
               inherit system;
-              config.allowUnfree = true;
+              # config.allowUnfree = true;
               # overlays = lib.attrValues self.overlays;
             };
             unstableHosts = [
               "Index"
               "nixos"
             ];
-            nixpkgs =
-              if builtins.elem hostname unstableHosts then nixpkgs-unstable else nixpkgs-2511;
+            nixpkgs = if builtins.elem hostname unstableHosts then nixpkgs-unstable else nixpkgs-2511;
             home-manager-nixos =
-              if builtins.elem hostname unstableHosts then home-manager-unstable-nixos else home-manager-2511-nixos;
+              if builtins.elem hostname unstableHosts then
+                home-manager-unstable-nixos
+              else
+                home-manager-2511-nixos;
           in
           nixpkgs.lib.nixosSystem {
             inherit system;
@@ -118,7 +120,7 @@
       let
         pkgs = import inputs.nixpkgs-unstable {
           inherit system;
-          config.allowUnfree = true;
+          # config.allowUnfree = true;
           # overlays = lib.attrValues self.overlays;
         };
       in

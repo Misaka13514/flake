@@ -44,7 +44,24 @@
     };
 
     nixpkgs = {
-      config.allowUnfree = true;
+      config = {
+        # allowUnfree = true;
+        allowUnfreePredicate =
+          pkg:
+          builtins.elem (lib.getName pkg) [
+            "b43-firmware"
+            "broadcom-bt-firmware"
+            "facetimehd-calibration"
+            "facetimehd-firmware"
+            "nvidia-settings"
+            "nvidia-x11"
+            "obsidian"
+            "steam-unwrapped"
+            "steam"
+            "vscode"
+            "xow_dongle-firmware"
+          ];
+      };
       # inherit overlays;
     };
 
