@@ -17,16 +17,16 @@ in
   home = {
     inherit username homeDirectory;
     sessionVariables = {
-      LANG = "zh_CN.UTF-8";
-      LANGUAGE = "zh_CN:en_US";
+      LANG = "en_US.UTF-8";
+      LANGUAGE = "en_US";
     };
-    stateVersion = "24.05";
+    stateVersion = "25.11";
   };
 
-  sops = {
-    age.keyFile = "${homeDirectory}/.config/sops/age/keys.txt";
-    defaultSopsFile = "${secretsPath}/home.yaml";
-  };
+  # sops = {
+  #   age.keyFile = "${homeDirectory}/.config/sops/age/keys.txt";
+  #   defaultSopsFile = "${secretsPath}/home.yaml";
+  # };
 
   xdg.userDirs = lib.mkIf (system != "aarch64-darwin") {
     enable = true;

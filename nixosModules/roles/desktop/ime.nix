@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ config, pkgs, ... }:
 
 {
   i18n.inputMethod = {
@@ -7,10 +7,10 @@
     fcitx5 = {
       waylandFrontend = true;
       addons = with pkgs; [
-        qt6Packages.fcitx5-chinese-addons
-        qt6Packages.fcitx5-configtool
+        kdePackages.fcitx5-chinese-addons
+        kdePackages.fcitx5-configtool
         fcitx5-pinyin-zhwiki
-        flakePackages.fcitx5-rose-pine
+        fcitx5-mozc-ut
       ];
     };
   };

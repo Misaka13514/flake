@@ -2,18 +2,11 @@
   lib,
   config,
   pkgs,
-  unstablePkgs,
   ...
 }:
 let
-  extraPackages = with unstablePkgs; [
-    any-nix-shell
+  extraPackages = with pkgs; [
     fastfetch
-    nix-output-monitor # https://github.com/maralorn/nix-output-monitor
-    dust
-    duf
-    cachix
-    asciinema
   ];
 in
 {
@@ -23,106 +16,15 @@ in
   programs.git = {
     enable = true;
     settings = {
-      user = {
-        name = "Noa Virellia";
-        email = "noa@requiem.garden";
-        signingKey = ''
-          ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOOz0CMmkGSXv4H77rmrmvadltAlwAZeVimxGoUAfArs Noa Virellia
-        '';
-      };
+      user.name = "Misaka13514";
+      user.email = "Misaka13514@gmail.com";
       init.defaultBranch = "main";
-      pull.rebase = true;
-      push.autoSetupRemote = true;
       commit.gpgsign = true;
-      gpg.format = "ssh";
     };
-  };
-
-  programs.starship = {
-    enable = true;
-    enableFishIntegration = true;
-    enableTransience = true;
-  };
-
-  home.file."${config.xdg.configHome}/starship.toml".source =
-    lib.mkForce ./externalConfigs/starship.toml;
-
-  programs.direnv = {
-    enable = true;
-    nix-direnv.enable = true;
   };
 
   programs.fish = {
     enable = true;
-    plugins = map (x: { inherit (x) name src; }) (
-      with pkgs.fishPlugins;
-      [
-        plugin-git
-        fzf-fish
-        puffer
-      ]
-    );
-    shellInit = "set -g fish_greeting";
-    interactiveShellInit = ''
-      set EDITOR nvim
-
-      any-nix-shell fish --info-right | source
-
-      if set -q FISH_FORK_PWD_HINT
-        if test (string match -r '^/' $FISH_FORK_PWD_HINT)
-          cd $FISH_FORK_PWD_HINT
-        end
-      end
-
-      if test -x /opt/homebrew/bin/brew
-        /opt/homebrew/bin/brew shellenv | source
-      end
-
-      export SSH_AUTH_SOCK="${config.home.homeDirectory}/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
-    '';
-    shellAliases = {
-      ".." = "cd ../";
-      "n" = "nvim";
-      "ls" = "eza -l";
-      "l" = "eza -l";
-      "ll" = "eza -al";
-      "tree" = "eza --tree";
-      "gg" = "lazygit";
-      "rec" = "asciinema rec";
-      "code" = "codium .";
-      "icat" = "kitten icat";
-      "issh" = "kitten ssh";
-    };
-    functions = {
-      fish_title = {
-        body = "echo $(pwd)";
-      };
-      pb = {
-        body = ''
-          if test (count $argv) -ne 1
-              echo "Usage: pb <filename>"
-              return 1
-          end
-          set file $argv[1]
-          curl -F "file=@$file" https://0x0.st
-        '';
-      };
-    };
-  };
-
-  programs.lazygit = {
-    enable = true;
-    settings = {
-      git.commit.signOff = true;
-    };
-  };
-
-  programs.gh = {
-    enable = true;
-    gitCredentialHelper.enable = true;
-    settings = {
-      git_protocol = "https";
-    };
   };
 
   # Replace command-not-found with nix-index and comma
@@ -132,77 +34,4 @@ in
     enable = true;
     enableFishIntegration = true;
   };
-
-  # Modern unix series
-  programs.eza = {
-    enable = true;
-    enableFishIntegration = true;
-  };
-
-  programs.atuin = {
-    enable = true;
-    daemon.enable = true;
-    enableFishIntegration = true;
-    flags = [
-      "--disable-up-arrow"
-    ];
-    settings = {
-      auto_sync = true;
-      update_check = false;
-      style = "compact";
-      prefers_reduced_motion = true;
-      sync.records = true;
-    };
-  };
-
-  sops.secrets.atuin_key = {
-    path = "${config.home.homeDirectory}/.local/share/atuin/key";
-  };
-
-  programs.zoxide = {
-    enable = true;
-    enableFishIntegration = true;
-  };
-
-  programs.fzf = {
-    enable = true;
-    enableFishIntegration = true;
-  };
-
-  programs.bat.enable = true;
-
-  programs.btop.enable = true;
-
-  programs.jq.enable = true;
-
-  programs.ripgrep.enable = true;
-
-  programs.fd = {
-    enable = true;
-    ignores = [
-      ".git/"
-      "node_modules/"
-    ];
-  };
-
-  programs.tealdeer.enable = true;
-
-  # Cachix
-  sops.secrets.cachix_auth_token = { };
-  sops.templates."cachix.dhall" = {
-    content = ''
-      { authToken =
-          "${config.sops.placeholder.cachix_auth_token}"
-      , hostname = "https://cachix.org"
-      , binaryCaches = [] : List { name : Text, secretKey : Text }
-      }
-    '';
-    path = "${config.home.homeDirectory}/.config/cachix/cachix.dhall";
-  };
-
-  programs.zellij = {
-    enable = true;
-  };
-
-  xdg.configFile."zellij/config.kdl".source = ./externalConfigs/zellij-config.kdl;
 }

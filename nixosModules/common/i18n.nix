@@ -8,6 +8,7 @@ _:
     supportedLocales = [
       "zh_CN.UTF-8/UTF-8"
       "en_US.UTF-8/UTF-8"
+      "ja_JP.UTF-8/UTF-8"
     ];
     extraLocaleSettings = {
       LC_ADDRESS = "zh_CN.UTF-8";

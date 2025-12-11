@@ -8,13 +8,22 @@
   # do not need to keep too much generations
   boot.loader.systemd-boot.configurationLimit = lib.mkDefault 10;
 
-  boot.supportedFilesystems = [ "ntfs" ]; # ntfs-3g
+  boot.kernelPackages = pkgs.linuxPackages_latest;
+
+  boot.kernel.sysctl."kernel.sysrq" = 1;
 
   programs.fish.enable = true;
 
-  environment.systemPackages = with pkgs; [
-    xdg-user-dirs
-  ];
+  services.openssh = {
+    enable = true;
+    settings.PasswordAuthentication = false;
+    settings.KbdInteractiveAuthentication = false;
+    settings.PermitRootLogin = "prohibit-password";
+  };
 
-  sops.age.keyFile = "/home/cmiki/.config/sops/age/keys.txt";
+  programs.gnupg.agent = {
+    enable = true;
+    enableSSHSupport = true;
+  };
+
 }
