@@ -1,6 +1,0 @@
-.direnv
-.pre-commit-config.yaml
-node_modules
-.env
-.DS_Store
-result
