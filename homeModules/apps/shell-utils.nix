@@ -20,6 +20,7 @@ in
       user.email = "Misaka13514@gmail.com";
       init.defaultBranch = "main";
       commit.gpgsign = true;
+      diff.sopsdiffer.textconv = "${pkgs.sops}/bin/sops -d";
     };
   };
 

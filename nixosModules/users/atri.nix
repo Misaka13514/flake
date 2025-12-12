@@ -45,7 +45,7 @@ in
     home-manager = lib.mkIf config.noa.homeManager.enable {
       sharedModules = [
         inputs.nix-index-database.homeModules.nix-index
-        # inputs.sops-nix.homeManagerModules.sops
+        inputs.sops-nix.homeManagerModules.sops
       ]
       ++ lib.optionals useKde [
         inputs.plasma-manager.homeModules.plasma-manager

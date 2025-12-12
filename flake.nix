@@ -106,7 +106,7 @@
               self.nixosModules.common
               # inputs.disko.nixosModules.disko
               home-manager-nixos.nixosModules.home-manager
-              # inputs.sops-nix.nixosModules.sops
+              inputs.sops-nix.nixosModules.sops
               # inputs.stylix.nixosModules.stylix
               # inputs.niri.nixosModules.niri
             ];

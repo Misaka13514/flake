@@ -9,6 +9,7 @@
       bbenoist.nix
       jnoortheen.nix-ide
       esbenp.prettier-vscode
+      signageos.signageos-vscode-sops
     ];
   };
 }
