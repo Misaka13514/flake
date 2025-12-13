@@ -63,7 +63,7 @@
           nixosModules
           homeModules
           ;
-        # overlays = lib.attrValues self.overlays;
+        overlays = lib.attrValues self.overlays;
       };
     in
     {
@@ -114,6 +114,10 @@
 
         directory = ./nixosConfigurations;
       };
+
+      overlays = {
+        flake-packages = import ./overlays/flake-packages.nix self;
+      };
     }
     // flake-utils.lib.eachDefaultSystem (
       system:
@@ -121,10 +125,28 @@
         pkgs = import inputs.nixpkgs-unstable {
           inherit system;
           # config.allowUnfree = true;
+          config.allowUnfreePredicate =
+            pkg:
+            builtins.elem (lib.getName pkg) [
+              "burpsuite"
+            ];
           # overlays = lib.attrValues self.overlays;
         };
       in
       {
+        packages =
+          lib.filterAttrs
+            (
+              pname: package:
+              if builtins.hasAttr "meta" package then builtins.elem system package.meta.platforms else true
+            )
+            (
+              lib.packagesFromDirectoryRecursive {
+                inherit (pkgs) callPackage;
+                directory = ./packages;
+              }
+            );
+
         devShells.default = pkgs.mkShell {
           packages = with pkgs; [
             nixd

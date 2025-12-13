@@ -3,6 +3,7 @@
   pkgs,
   lib,
   inputs,
+  overlays,
   ...
 }:
 
@@ -62,7 +63,7 @@
             "xow_dongle-firmware"
           ];
       };
-      # inherit overlays;
+      inherit overlays;
     };
 
     system.stateVersion = "25.11";

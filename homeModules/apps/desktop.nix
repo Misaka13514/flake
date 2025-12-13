@@ -12,6 +12,7 @@ in
     ./vscode
     ./chromium
     ./telegram-desktop
+    ./burpsuite-pro
   ]
   ++ lib.optionals useKde [
     ./plasma
