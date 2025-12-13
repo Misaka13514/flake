@@ -25,9 +25,9 @@ _: {
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK7DuYiwiKT6VCfWLCE/OTALtgqujaZWWoco9pKmGKGP"
     ];
   };
-  networking.firewall = {
-    enable = true;
-  };
+  networking.firewall.enable = true;
+  networking.nftables.enable = true;
+
   services.openssh = {
     enable = true;
     settings.PasswordAuthentication = false;
