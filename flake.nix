@@ -129,6 +129,7 @@
             pkg:
             builtins.elem (lib.getName pkg) [
               "burpsuite"
+              "ida-pro"
             ];
           # overlays = lib.attrValues self.overlays;
         };
