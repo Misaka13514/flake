@@ -57,6 +57,9 @@ in
             config = {
               General = {
                 icon = "${assetsPath}/nix-snowflake-transgender.png";
+                compactMode = true;
+                highlightNewlyInstalledApps = false;
+                switchCategoryOnHover = true;
               };
             };
           }

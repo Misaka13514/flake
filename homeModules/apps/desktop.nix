@@ -13,6 +13,7 @@ in
     ./chromium
     ./telegram-desktop
     ./burpsuite-pro
+    ./ida-pro
   ]
   ++ lib.optionals useKde [
     ./plasma

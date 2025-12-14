@@ -42,6 +42,23 @@
       inherit (inputs.nixpkgs-2511) lib;
       secretsPath = ./secrets;
       assetsPath = ./assets;
+      unfreePackages = [
+        "b43-firmware"
+        "broadcom-bt-firmware"
+        "burpsuite"
+        "facetimehd-calibration"
+        "facetimehd-firmware"
+        "ida-pro"
+        "nvidia-settings"
+        "nvidia-x11"
+        "obsidian"
+        "steam-unwrapped"
+        "steam"
+        "vscode"
+        "xow_dongle-firmware"
+      ];
+      unfreePredicate = pkg: builtins.elem (lib.getName pkg) unfreePackages;
+
       # This recursive attrset pattern is forbidden, but we use it here anyway.
       #
       # The following flake output attributes must be NixOS modules:
@@ -58,6 +75,7 @@
           inputs
           secretsPath
           assetsPath
+          unfreePredicate
           ;
         inherit (self)
           nixosModules
@@ -125,12 +143,7 @@
         pkgs = import inputs.nixpkgs-unstable {
           inherit system;
           # config.allowUnfree = true;
-          config.allowUnfreePredicate =
-            pkg:
-            builtins.elem (lib.getName pkg) [
-              "burpsuite"
-              "ida-pro"
-            ];
+          config.allowUnfreePredicate = unfreePredicate;
           # overlays = lib.attrValues self.overlays;
         };
       in
