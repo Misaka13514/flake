@@ -9,6 +9,7 @@
   imports = with nixosModules; [
     roles.container
     users.atri
+    services.caddy
   ];
 
   noa.nix.enableMirrorSubstituter = true;
