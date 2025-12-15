@@ -47,4 +47,7 @@
   boot.loader.systemd-boot.enable = lib.mkForce false;
   boot.loader.grub.enable = true;
   boot.loader.grub.device = "/dev/sda";
+
+  services.qemuGuest.enable = true;
+  services.spice-vdagentd.enable = true;
 }
