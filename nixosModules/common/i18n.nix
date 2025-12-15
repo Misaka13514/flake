@@ -1,6 +1,4 @@
-_:
-
-{
+_: {
   time.timeZone = "Asia/Shanghai";
 
   i18n = {
