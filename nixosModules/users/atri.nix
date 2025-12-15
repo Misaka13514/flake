@@ -5,6 +5,7 @@
   config,
   inputs,
   homeModules,
+  nixSecrets,
   ...
 }@osSpecialArgs:
 let
@@ -35,6 +36,7 @@ in
         "wireshark"
       ];
       shell = pkgs.fish;
+      initialHashedPassword = nixSecrets.initialHashedPassword;
       openssh.authorizedKeys.keys = [
         "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK7DuYiwiKT6VCfWLCE/OTALtgqujaZWWoco9pKmGKGP"
       ];

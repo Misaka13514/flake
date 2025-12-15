@@ -79,6 +79,22 @@
         "type": "github"
       }
     },
+    "nix-secrets": {
+      "locked": {
+        "lastModified": 1765769007,
+        "narHash": "sha256-8XDpOOkKCzFvtUN0shjK+n7vxzBPJd50ZAVdezpKZZU=",
+        "ref": "refs/heads/main",
+        "rev": "329d75ce64781c031f34144816695effc210a7f4",
+        "shallow": true,
+        "type": "git",
+        "url": "ssh://git@github.com/Misaka13514/nix-secrets.git"
+      },
+      "original": {
+        "shallow": true,
+        "type": "git",
+        "url": "ssh://git@github.com/Misaka13514/nix-secrets.git"
+      }
+    },
     "nixpkgs-2511": {
       "locked": {
         "lastModified": 1765311797,
@@ -140,6 +156,7 @@
         "home-manager-2511-nixos": "home-manager-2511-nixos",
         "home-manager-unstable-nixos": "home-manager-unstable-nixos",
         "nix-index-database": "nix-index-database",
+        "nix-secrets": "nix-secrets",
         "nixpkgs-2511": "nixpkgs-2511",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "plasma-manager": "plasma-manager",

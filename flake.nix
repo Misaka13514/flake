@@ -26,6 +26,7 @@
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
+    nix-secrets.url = "git+ssh://git@github.com/Misaka13514/nix-secrets.git?shallow=1";
   };
 
   outputs =
@@ -36,6 +37,7 @@
       home-manager-2511-nixos,
       home-manager-unstable-nixos,
       flake-utils,
+      nix-secrets,
       ...
     }:
     let
@@ -82,6 +84,7 @@
           homeModules
           ;
         overlays = lib.attrValues self.overlays;
+        nixSecrets = inputs.nix-secrets.secrets;
       };
     in
     {
