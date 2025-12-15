@@ -12,8 +12,6 @@
 
   boot.kernel.sysctl."kernel.sysrq" = 1;
 
-  programs.fish.enable = true;
-
   services.openssh = {
     enable = true;
     settings.PasswordAuthentication = false;

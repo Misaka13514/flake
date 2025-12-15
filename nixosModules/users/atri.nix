@@ -40,7 +40,7 @@ in
       ];
     };
 
-    programs.fish.enable = config.noa.homeManager.enable;
+    programs.fish.enable = true;
 
     home-manager = lib.mkIf config.noa.homeManager.enable {
       sharedModules = [
