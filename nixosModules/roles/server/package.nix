@@ -15,25 +15,6 @@ _: {
     enable = true;
     defaultEditor = true;
   };
-  programs.git.enable = true;
-
-  users.mutableUsers = false;
-
-  # Access
-  users.users.root = {
-    openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK7DuYiwiKT6VCfWLCE/OTALtgqujaZWWoco9pKmGKGP"
-    ];
-  };
-  networking.firewall.enable = true;
-  networking.nftables.enable = true;
-
-  services.openssh = {
-    enable = true;
-    settings.PasswordAuthentication = false;
-    settings.KbdInteractiveAuthentication = false;
-    settings.PermitRootLogin = "prohibit-password";
-  };
 
   systemd = {
     # Given that our systems are headless, emergency mode is useless.

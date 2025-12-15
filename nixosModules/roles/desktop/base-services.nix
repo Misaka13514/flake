@@ -11,17 +11,4 @@
   boot.kernelPackages = pkgs.linuxPackages_zen;
 
   boot.kernel.sysctl."kernel.sysrq" = 1;
-
-  services.openssh = {
-    enable = true;
-    settings.PasswordAuthentication = false;
-    settings.KbdInteractiveAuthentication = false;
-    settings.PermitRootLogin = "prohibit-password";
-  };
-
-  programs.gnupg.agent = {
-    enable = true;
-    enableSSHSupport = true;
-  };
-
 }

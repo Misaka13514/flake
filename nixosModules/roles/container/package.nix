@@ -6,11 +6,4 @@ _: {
     enable = true;
     defaultEditor = true;
   };
-
-  programs.git.enable = true;
-
-  users.mutableUsers = false;
-
-  networking.firewall.enable = true;
-  networking.nftables.enable = true;
 }
