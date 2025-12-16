@@ -36,6 +36,7 @@ in
       "${domain}" = {
         extraDomainNames = [ "*.${domain}" ];
         dnsProvider = "cloudflare";
+        dnsPropagationCheck = false; # poor CN DNS
         environmentFile = config.sops.templates."acme-credentials".path;
       };
     };
