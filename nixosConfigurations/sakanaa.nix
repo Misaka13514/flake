@@ -70,10 +70,30 @@ let
     SYNO_DIR="/usr/syno/etc/certificate/system/default"
     deploy_to "${nasHost}" "${nasPort}" "Synology" \
       bash -c "
-        cat fullchain.pem | ssh -p ${nasPort} ${sshOpts} ${nasHost} \"cat > '$SYNO_DIR/fullchain.pem'\" && \
-        cat key.pem       | ssh -p ${nasPort} ${sshOpts} ${nasHost} \"cat > '$SYNO_DIR/privkey.pem'\" && \
-        cat fullchain.pem | ssh -p ${nasPort} ${sshOpts} ${nasHost} \"cat > '$SYNO_DIR/cert.pem'\" && \
-        ssh -p ${nasPort} ${sshOpts} ${nasHost} 'synosystemctl restart nginx'
+        echo 'Uploading to Synology /tmp...'
+        cat fullchain.pem | ssh -p ${nasPort} ${sshOpts} ${nasHost} \"cat > /tmp/acme.crt\" && \
+        cat key.pem       | ssh -p ${nasPort} ${sshOpts} ${nasHost} \"cat > /tmp/acme.key\" && \
+
+        echo 'Applying on Synology...'
+        ssh -p ${nasPort} ${sshOpts} ${nasHost} '
+          set -e
+          DEFAULT_ID=\$(cat /usr/syno/etc/certificate/_archive/DEFAULT)
+          TARGET_DIR=\"/usr/syno/etc/certificate/_archive/\$DEFAULT_ID\"
+
+          echo \"Target Certificate Dir: \$TARGET_DIR\"
+
+          cp /tmp/acme.crt \"\$TARGET_DIR/fullchain.pem\"
+          cp /tmp/acme.crt \"\$TARGET_DIR/cert.pem\"
+          cp /tmp/acme.key \"\$TARGET_DIR/privkey.pem\"
+
+          rm /tmp/acme.crt /tmp/acme.key
+
+          echo \"Running synow3tool...\"
+          /usr/syno/bin/synow3tool --gen-all
+
+          echo \"Restarting Nginx...\"
+          /usr/syno/bin/synosystemctl restart nginx
+        '
       "
 
     echo "--- Deployment Finished ---"
@@ -108,7 +128,10 @@ in
       "${domain}" = {
         extraDomainNames = [ "*.${domain}" ];
         dnsProvider = "cloudflare";
-        extraLegoFlags = [ "--dns.propagation-wait" "20s" ]; # poor CN DNS
+        extraLegoFlags = [
+          "--dns.propagation-wait"
+          "20s"
+        ]; # poor CN DNS
         environmentFile = config.sops.templates."acme-credentials".path;
         postRun = ''
           ${deployCertsScript}
