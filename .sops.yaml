@@ -2,13 +2,13 @@ keys:
   - &admin_atri 293B93D8A471059F85D716A65BA92099D9BE2DAA
   - &host_sakanaa age1vkzfcwl6qwh7y3h9rhdygxy03rqy5nhfxdmqchquz7r68vm2l4wsdsexez
 creation_rules:
-  - path_regex: secrets/cloudflare.yaml
+  - path_regex: secrets/cloudflare.yaml$
     key_groups:
       - pgp:
           - *admin_atri
         age:
           - *host_sakanaa
-  - path_regex: secrets/home-acme-deploy.yaml
+  - path_regex: secrets/home-[^/]+\.(yaml|json|env|ini)$
     key_groups:
       - pgp:
           - *admin_atri

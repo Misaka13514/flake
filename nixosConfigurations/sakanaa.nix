@@ -20,6 +20,7 @@ in
 {
   imports = with nixosModules; [
     roles.container
+    services.docker
     users.atri
   ];
 
@@ -41,6 +42,21 @@ in
     '';
   };
 
+  sops.secrets."syncplay-salt" = {
+    format = "yaml";
+    sopsFile = "${secretsPath}/home-syncplay.yaml";
+  };
+
+  sops.secrets."syncplay-motd" = {
+    format = "yaml";
+    sopsFile = "${secretsPath}/home-syncplay.yaml";
+    mode = "0444";
+  };
+
+  services.openssh = {
+    ports = [ 2252 ];
+  };
+
   security.acme = {
     acceptTerms = true;
     defaults.email = "acme@apeiria.net";
@@ -58,6 +74,15 @@ in
         '';
       };
     };
+  };
+
+  services.syncplay = {
+    enable = true;
+    useACMEHost = domain;
+    saltFile = config.sops.secrets."syncplay-salt".path;
+    motdFile = config.sops.secrets."syncplay-motd".path;
+    roomsDBFile = "rooms.db";
+    statsDBFile = "stats.db";
   };
 
   noa.nix.enableMirrorSubstituter = true;
