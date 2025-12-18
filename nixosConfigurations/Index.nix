@@ -9,6 +9,7 @@
     roles.desktop
     gui.suites.plasma
     gui.steam
+    services.vscode-server
     hardware.bluetooth
     users.atri
   ];

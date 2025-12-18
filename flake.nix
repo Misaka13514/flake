@@ -26,6 +26,10 @@
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
+    vscode-server = {
+      url = "github:nix-community/nixos-vscode-server";
+      inputs.flake-utils.follows = "flake-utils";
+    };
     nix-secrets.url = "git+ssh://git@github.com/Misaka13514/nix-secrets.git?shallow=1";
   };
 
@@ -34,8 +38,6 @@
       self,
       nixpkgs-2511,
       nixpkgs-unstable,
-      home-manager-2511-nixos,
-      home-manager-unstable-nixos,
       flake-utils,
       nix-secrets,
       ...
@@ -112,9 +114,9 @@
             nixpkgs = if builtins.elem hostname unstableHosts then nixpkgs-unstable else nixpkgs-2511;
             home-manager-nixos =
               if builtins.elem hostname unstableHosts then
-                home-manager-unstable-nixos
+                inputs.home-manager-unstable-nixos
               else
-                home-manager-2511-nixos;
+                inputs.home-manager-2511-nixos;
           in
           nixpkgs.lib.nixosSystem {
             inherit system;
@@ -128,6 +130,7 @@
               # inputs.disko.nixosModules.disko
               home-manager-nixos.nixosModules.home-manager
               inputs.sops-nix.nixosModules.sops
+              inputs.vscode-server.nixosModules.default
               # inputs.stylix.nixosModules.stylix
               # inputs.niri.nixosModules.niri
             ];
