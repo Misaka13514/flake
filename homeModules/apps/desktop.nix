@@ -9,11 +9,12 @@ let
 in
 {
   imports = [
-    ./vscode
-    ./chromium
-    ./telegram-desktop
     ./burpsuite-pro
+    ./chromium
+    ./hmcl
     ./ida-pro
+    ./telegram-desktop
+    ./vscode
   ]
   ++ lib.optionals useKde [
     ./plasma
@@ -32,6 +33,7 @@ in
     "ELECTRON_OZONE_PLATFORM_HINT" = "auto";
     # misc
     "_JAVA_AWT_WM_NONREPARENTING" = "1";
+    "GDK_SCALE" = "2"; # Java HiDPI scaling
     "QT_WAYLAND_DISABLE_WINDOWDECORATION" = "1";
     "QT_QPA_PLATFORM" = "wayland";
     "SDL_VIDEODRIVER" = "wayland";
