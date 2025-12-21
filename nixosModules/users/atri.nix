@@ -64,6 +64,7 @@ in
           unstablePkgs
           secretsPath
           assetsPath
+          nixSecrets
           ;
         inherit username;
       };

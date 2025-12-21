@@ -9,6 +9,7 @@ let
 in
 {
   imports = [
+    ./ayugram-desktop
     ./burpsuite-pro
     ./chromium
     ./hmcl

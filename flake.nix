@@ -158,7 +158,10 @@
           lib.filterAttrs
             (
               pname: package:
-              if builtins.hasAttr "meta" package then builtins.elem system package.meta.platforms else true
+              if (builtins.hasAttr "meta" package && builtins.hasAttr "platforms" package.meta) then
+                builtins.elem system package.meta.platforms
+              else
+                true
             )
             (
               lib.packagesFromDirectoryRecursive {
