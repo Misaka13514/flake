@@ -66,4 +66,6 @@
   };
 
   console.useXkbConfig = true;
+
+  boot.kernelParams = [ "mitigations=off" ];
 }
