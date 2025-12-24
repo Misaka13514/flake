@@ -27,6 +27,8 @@ in
     desktopManager.plasma6.enable = true;
   };
 
+  programs.kdeconnect.enable = true;
+
   environment.sessionVariables = {
     NIXOS_OZONE_WL = "1";
   };

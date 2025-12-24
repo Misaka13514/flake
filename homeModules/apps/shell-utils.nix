@@ -7,6 +7,12 @@
 let
   extraPackages = with pkgs; [
     fastfetch
+    ldns
+    nmap
+    p7zip
+    pciutils
+    usbutils
+    whois
   ];
 in
 {

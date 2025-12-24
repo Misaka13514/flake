@@ -34,10 +34,11 @@ let
 in
 {
   environment.systemPackages = with pkgs; [
+    curl
+    htop
+    killall
     vim
     wget
-    curl
-    killall
   ];
 
   users.mutableUsers = false;

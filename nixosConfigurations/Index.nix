@@ -8,7 +8,9 @@
   imports = with nixosModules; [
     roles.desktop
     gui.suites.plasma
+    gui.obs-studio
     gui.steam
+    gui.wireshark
     services.vscode-server
     hardware.bluetooth
     users.atri

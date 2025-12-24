@@ -20,10 +20,15 @@ in
   home.packages = with pkgs; [
     flakePackages.burpsuite-pro
     flakePackages.ida-pro
+    gimp
     hmcl
+    libreoffice-qt-fresh
+    mission-center
+    mpv
     obsidian
     telegram-desktop
     vlc
+    yubioath-flutter
   ];
 
   home.sessionVariables = {
