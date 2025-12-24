@@ -10,11 +10,7 @@ in
 {
   imports = [
     ./ayugram-desktop
-    ./burpsuite-pro
     ./chromium
-    ./hmcl
-    ./ida-pro
-    ./telegram-desktop
     ./vscode
   ]
   ++ lib.optionals useKde [
@@ -22,7 +18,11 @@ in
   ];
 
   home.packages = with pkgs; [
+    flakePackages.burpsuite-pro
+    flakePackages.ida-pro
+    hmcl
     obsidian
+    telegram-desktop
     vlc
   ];
 
