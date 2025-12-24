@@ -131,6 +131,7 @@
               home-manager-nixos.nixosModules.home-manager
               inputs.sops-nix.nixosModules.sops
               inputs.vscode-server.nixosModules.default
+              inputs.nix-index-database.nixosModules.default
               # inputs.stylix.nixosModules.stylix
               # inputs.niri.nixosModules.niri
             ];
