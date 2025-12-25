@@ -23,10 +23,10 @@ in
     stateVersion = "25.11";
   };
 
-  # sops = {
-  #   age.keyFile = "${homeDirectory}/.config/sops/age/keys.txt";
-  #   defaultSopsFile = "${secretsPath}/home.yaml";
-  # };
+  sops = {
+    age.keyFile = "${homeDirectory}/.config/sops/age/keys.txt";
+    # defaultSopsFile = "${secretsPath}/home.yaml";
+  };
 
   xdg.userDirs = lib.mkIf (system != "aarch64-darwin") {
     enable = true;

@@ -3,9 +3,12 @@
   lib,
   hostname,
   assetsPath,
+  secretsPath,
+  config,
   ...
 }:
 let
+  username = "atri";
   wallpaper =
     if hostname == "Index" then
       "${assetsPath}/wallpapers/114305978_p1.png"
@@ -123,6 +126,24 @@ in
       "kded5rc"."Module-browserintegrationreminder" = {
         "autoload" = false;
       };
+
+      "krdpserverrc"."General" = {
+        "Certificate" = config.sops.secrets."cert-01-crt".path;
+        "CertificateKey" = config.sops.secrets."cert-01-key".path;
+        "SystemUserEnabled" = true;
+      };
     };
+  };
+
+  sops.secrets."cert-01-key" = {
+    format = "yaml";
+    sopsFile = "${secretsPath}/ca.yaml";
+    mode = "0400";
+  };
+
+  sops.secrets."cert-01-crt" = {
+    format = "yaml";
+    sopsFile = "${secretsPath}/ca.yaml";
+    mode = "0444";
   };
 }
