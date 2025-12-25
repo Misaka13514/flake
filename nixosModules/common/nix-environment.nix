@@ -24,6 +24,9 @@
         ];
         substituters = lib.mkIf config.noa.nix.enableMirrorSubstituter [
           "https://mirror.iscas.ac.cn/nix-channels/store"
+          "https://mirror.sjtu.edu.cn/nix-channels/store"
+          "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store"
+          "https://mirrors.ustc.edu.cn/nix-channels/store"
         ];
         extra-substituters = [
           "https://nix-community.cachix.org"
