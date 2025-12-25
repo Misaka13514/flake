@@ -3,6 +3,8 @@
   lib,
   hostname,
   assetsPath,
+  secretsPath,
+  config,
   ...
 }:
 let
@@ -14,8 +16,30 @@ let
       "${assetsPath}/wallpapers/114305978_p0.png";
 in
 {
+  sops.secrets."cert-01-key" = {
+    format = "yaml";
+    sopsFile = "${secretsPath}/ca.yaml";
+    mode = "0400";
+    owner = "xrdp";
+  };
+
+  sops.secrets."cert-01-crt" = {
+    format = "yaml";
+    sopsFile = "${secretsPath}/ca.yaml";
+    mode = "0444";
+    owner = "xrdp";
+  };
+
   services = {
-    # xserver.enable = true; # optional
+    xserver.enable = true; # optional
+
+    xrdp = {
+      enable = true;
+      defaultWindowManager = "startplasma-x11";
+      openFirewall = true;
+      sslCert = config.sops.secrets."cert-01-crt".path;
+      sslKey = config.sops.secrets."cert-01-key".path;
+    };
 
     displayManager = {
       sddm = {
