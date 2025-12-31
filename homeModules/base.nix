@@ -4,6 +4,7 @@
   secretsPath,
   osConfig,
   system,
+  pkgs,
   ...
 }:
 let
@@ -27,6 +28,12 @@ in
     age.keyFile = "${homeDirectory}/.config/sops/age/keys.txt";
     # defaultSopsFile = "${secretsPath}/home.yaml";
   };
+
+  # Disable GPG for sops-nix systemd user service
+  # Workaround for https://github.com/Mic92/sops-nix/issues/356
+  systemd.user.services.sops-nix.Service.Environment = lib.mkForce [
+    "SOPS_GPG_EXEC=${pkgs.coreutils}/bin/false"
+  ];
 
   xdg.userDirs = lib.mkIf (system != "aarch64-darwin") {
     enable = true;
