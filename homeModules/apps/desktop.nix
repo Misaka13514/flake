@@ -26,6 +26,8 @@ in
     mission-center
     mpv
     obsidian
+    remmina
+    rustdesk-flutter
     telegram-desktop
     vlc
     yubioath-flutter

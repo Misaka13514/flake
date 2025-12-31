@@ -76,7 +76,7 @@ in
                   "applications:systemsettings.desktop"
                   "applications:code.desktop"
                   "applications:chromium-browser.desktop"
-                  "applications:org.telegram.desktop.desktop"
+                  "applications:com.ayugram.desktop.desktop"
                 ];
               };
             };
