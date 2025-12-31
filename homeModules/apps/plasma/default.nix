@@ -132,6 +132,10 @@ in
         "CertificateKey" = config.sops.secrets."cert-01-key".path;
         "SystemUserEnabled" = true;
       };
+
+      "plasmaparc"."General" = {
+        "RaiseMaximumVolume" = true;
+      };
     };
   };
 

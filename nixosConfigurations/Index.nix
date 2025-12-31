@@ -11,6 +11,7 @@
     gui.obs-studio
     gui.steam
     gui.wireshark
+    services.docker
     services.vscode-server
     hardware.bluetooth
     users.atri

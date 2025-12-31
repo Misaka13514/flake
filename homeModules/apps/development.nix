@@ -8,6 +8,7 @@
     # Language servers
     nixd
     nixfmt-rfc-style
+    sops
   ];
 
   # Neovim
