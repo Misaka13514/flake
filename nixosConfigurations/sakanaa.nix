@@ -36,12 +36,6 @@ in
     sopsFile = "${secretsPath}/cloudflare.yaml";
   };
 
-  sops.templates."acme-credentials" = {
-    content = ''
-      CF_DNS_API_TOKEN=${config.sops.placeholder."cloudflare-api-token"}
-    '';
-  };
-
   sops.secrets."syncplay-salt" = {
     format = "yaml";
     sopsFile = "${secretsPath}/home-syncplay.yaml";
@@ -68,7 +62,9 @@ in
           "--dns.propagation-wait"
           "20s"
         ]; # poor CN DNS
-        environmentFile = config.sops.templates."acme-credentials".path;
+        credentialFiles = {
+          "CF_DNS_API_TOKEN_FILE" = config.sops.secrets."cloudflare-api-token".path;
+        };
         postRun = ''
           ${deployCerts}/bin/deploy-certs
         '';

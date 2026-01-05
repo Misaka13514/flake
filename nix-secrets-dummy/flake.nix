@@ -12,6 +12,13 @@
         homeDomain = "example.org";
         telegramApiId = null;
         telegramApiHash = null;
+        homuraIpv4Address = null;
+        homuraIpv4Gateway = null;
+        homuraIpv6Address = null;
+        homuraIpv6Gateway = null;
+        homuraDomain = "example.org";
+        homuraDomainCdn = "cdn.example.org";
+        homuraWsPath = "/vmess";
       };
     };
 }

@@ -3,6 +3,7 @@ keys:
   - &home_atri age1uaacus925f6gzw8naxasvakvvm949e4t5eflzvvhdkxqq3n34f8sa8dkp5
   - &host_sakanaa age1vkzfcwl6qwh7y3h9rhdygxy03rqy5nhfxdmqchquz7r68vm2l4wsdsexez
   - &host_Index age1u3k3tkjeh078fhhstn4q8dhw8jv95awdcnay3dnju4hu22y7evpqwfgzjq
+  - &host_homura age1jw6r68sygsu9te5cexxazk0f8m98n8px86hzaufjwzk3r6707e2qjvjllr
 creation_rules:
   - path_regex: secrets/cloudflare.yaml$
     key_groups:
@@ -10,6 +11,13 @@ creation_rules:
           - *admin_atri
         age:
           - *host_sakanaa
+          - *host_homura
+  - path_regex: secrets/sing-box.yaml$
+    key_groups:
+      - pgp:
+          - *admin_atri
+        age:
+          - *host_homura
   - path_regex: secrets/ca.yaml$
     key_groups:
       - pgp:

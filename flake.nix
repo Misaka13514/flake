@@ -9,6 +9,10 @@
       url = "github:nix-community/nix-index-database";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
     home-manager-2511-nixos = {
       url = "github:nix-community/home-manager/release-25.11";
       inputs.nixpkgs.follows = "nixpkgs-2511";
@@ -133,9 +137,10 @@
               self.nixosModules.common
               # inputs.disko.nixosModules.disko
               home-manager-nixos.nixosModules.home-manager
+              inputs.disko.nixosModules.disko
+              inputs.nix-index-database.nixosModules.default
               inputs.sops-nix.nixosModules.sops
               inputs.vscode-server.nixosModules.default
-              inputs.nix-index-database.nixosModules.default
               # inputs.stylix.nixosModules.stylix
               # inputs.niri.nixosModules.niri
             ];
