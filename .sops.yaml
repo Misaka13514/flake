@@ -18,6 +18,12 @@ creation_rules:
           - *admin_atri
         age:
           - *host_homura
+  - path_regex: secrets/abuseipdb.yaml$
+    key_groups:
+      - pgp:
+          - *admin_atri
+        age:
+          - *host_homura
   - path_regex: secrets/ca.yaml$
     key_groups:
       - pgp:
