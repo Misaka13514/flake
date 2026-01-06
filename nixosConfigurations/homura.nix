@@ -242,7 +242,7 @@ in
             path = "${nixSecrets.homuraWsPath}";
           };
           users = map (acc: {
-            name = acc.name;
+            inherit (acc) name;
             uuid = {
               _secret = config.sops.secrets."sing-box/${acc.user}/${acc.route}".path;
             };
@@ -259,7 +259,7 @@ in
             key_path = "/var/lib/acme/${domain}/key.pem";
           };
           users = map (acc: {
-            name = acc.name;
+            inherit (acc) name;
             password = {
               _secret = config.sops.secrets."sing-box/${acc.user}/${acc.route}".path;
             };

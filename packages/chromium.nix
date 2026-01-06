@@ -13,5 +13,5 @@ pkgs.symlinkJoin {
       --set GOOGLE_DEFAULT_CLIENT_ID ${clientId} \
       --set GOOGLE_DEFAULT_CLIENT_SECRET ${clientSecret}
   '';
-  meta = pkgs.chromium.meta;
+  inherit (pkgs.chromium) meta;
 }

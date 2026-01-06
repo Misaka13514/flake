@@ -1,4 +1,4 @@
-{ pkgs }:
+{ pkgs, lib }:
 
 let
   loaderJar = pkgs.fetchurl {
@@ -6,7 +6,7 @@ let
     hash = "sha256-3N8orPNgVUpamNePQDyWzOpQC+JLJ9ArAg4UKCBjfAo=";
   };
 in
-pkgs.burpsuite.override {
+(pkgs.burpsuite.override {
   proEdition = true;
 
   buildFHSEnv =
@@ -32,4 +32,9 @@ pkgs.burpsuite.override {
         runScript = "${pkgs.jdk}/bin/java -jar ${loaderEnv}/loader.jar";
       }
     );
-}
+}).overrideAttrs
+  (old: {
+    meta = (old.meta or { }) // {
+      platforms = lib.platforms.linux;
+    };
+  })

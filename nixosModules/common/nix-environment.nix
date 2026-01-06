@@ -5,6 +5,7 @@
   inputs,
   overlays,
   unfreePredicate,
+  system,
   ...
 }:
 
@@ -52,6 +53,7 @@
     };
 
     nixpkgs = {
+      hostPlatform = { inherit system; };
       config = {
         # allowUnfree = true;
         allowUnfreePredicate = unfreePredicate;

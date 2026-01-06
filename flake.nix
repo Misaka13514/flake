@@ -5,6 +5,11 @@
     nixpkgs-2511.url = "github:NixOS/nixpkgs/nixos-25.11";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    git-hooks = {
+      url = "github:cachix/git-hooks.nix";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
+    deploy-rs.url = "github:serokell/deploy-rs";
     nix-index-database = {
       url = "github:nix-community/nix-index-database";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
@@ -127,7 +132,6 @@
                 inputs.home-manager-2511-nixos;
           in
           nixpkgs.lib.nixosSystem {
-            inherit system;
             specialArgs = globalSpecialArgs // {
               inherit hostname system unstablePkgs;
             };
@@ -135,7 +139,6 @@
               path
               ./hardwares/${hostname}.nix
               self.nixosModules.common
-              # inputs.disko.nixosModules.disko
               home-manager-nixos.nixosModules.home-manager
               inputs.disko.nixosModules.disko
               inputs.nix-index-database.nixosModules.default
@@ -146,6 +149,23 @@
             ];
           };
 
+        directory = ./nixosConfigurations;
+      };
+
+      deploy.nodes = lib.packagesFromDirectoryRecursive {
+        callPackage =
+          path: _:
+          let
+            hostname = lib.removeSuffix ".nix" (builtins.baseNameOf path);
+          in
+          {
+            inherit hostname;
+            sshUser = "root";
+            profiles.system = {
+              user = "root";
+              path = inputs.deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations."${hostname}";
+            };
+          };
         directory = ./nixosConfigurations;
       };
 
@@ -163,7 +183,7 @@
           # overlays = lib.attrValues self.overlays;
         };
       in
-      {
+      rec {
         packages =
           lib.filterAttrs
             (
@@ -180,6 +200,17 @@
               }
             );
 
+        checks = {
+          pre-commit-check = inputs.git-hooks.lib.${system}.run {
+            src = ./.;
+            hooks = {
+              nixfmt-rfc-style.enable = true;
+              statix.enable = true;
+            };
+          };
+        };
+        # // inputs.deploy-rs.lib."${system}".deployChecks self.deploy;
+
         devShells.default = pkgs.mkShell {
           packages = with pkgs; [
             nixd
@@ -194,6 +225,8 @@
             git-agecrypt
             nh
           ];
+          inherit (checks.pre-commit-check) shellHook;
+          buildInputs = checks.pre-commit-check.enabledPackages;
         };
 
         formatter = pkgs.nixfmt-rfc-style;

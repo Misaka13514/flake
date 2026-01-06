@@ -36,7 +36,7 @@ in
         "wireshark"
       ];
       shell = pkgs.fish;
-      initialHashedPassword = nixSecrets.initialHashedPassword;
+      inherit (nixSecrets) initialHashedPassword;
       openssh.authorizedKeys.keys = nixSecrets.authorizedKeys;
     };
 
