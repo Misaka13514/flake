@@ -87,19 +87,21 @@
           callPackage = path: _: import path;
           directory = _dirPath;
         };
+      overlays = lib.attrValues self.overlays;
+      nixSecrets = inputs.nix-secrets.secrets;
       globalSpecialArgs = {
         inherit
           inputs
           secretsPath
           assetsPath
           unfreePredicate
+          overlays
+          nixSecrets
           ;
         inherit (self)
           nixosModules
           homeModules
           ;
-        overlays = lib.attrValues self.overlays;
-        nixSecrets = inputs.nix-secrets.secrets;
       };
     in
     {
@@ -117,8 +119,8 @@
             system = "x86_64-linux";
             unstablePkgs = import inputs.nixpkgs-unstable {
               inherit system;
+              # inherit overlays;
               # config.allowUnfree = true;
-              # overlays = lib.attrValues self.overlays;
             };
             unstableHosts = [
               "Index"
@@ -178,9 +180,9 @@
       let
         pkgs = import inputs.nixpkgs-unstable {
           inherit system;
+          # inherit overlays;
           # config.allowUnfree = true;
           config.allowUnfreePredicate = unfreePredicate;
-          # overlays = lib.attrValues self.overlays;
         };
       in
       rec {

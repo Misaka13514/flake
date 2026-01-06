@@ -17,7 +17,7 @@
     homeManager = {
       enable = true;
       modules = with homeModules; [
-        apps.desktop
+        linux-desktop
         apps.shell-utils
         apps.development
       ];
