@@ -88,7 +88,7 @@ in
             config = {
               Appearance = {
                 showSeconds = "Always";
-                use24hFormat = true;
+                use24hFormat = "2";
                 dateFormat = "isoDate";
               };
             };
@@ -120,7 +120,8 @@ in
       };
 
       "kwinrc"."Wayland" = {
-        "InputMethod" = "/run/current-system/sw/share/applications/fcitx5-wayland-launcher.desktop";
+        "InputMethod" =
+          "/etc/profiles/per-user/${username}/share/applications/fcitx5-wayland-launcher.desktop";
       };
 
       "kded5rc"."Module-browserintegrationreminder" = {

@@ -36,7 +36,15 @@ in
   programs.starship = {
     enable = true;
     enableFishIntegration = true;
-    enableTransience = true;
+    settings = {
+      add_newline = true;
+      directory = {
+        fish_style_pwd_dir_length = 1;
+      };
+      line_break = {
+        disabled = true;
+      };
+    };
   };
 
   programs.fish = {
@@ -56,11 +64,32 @@ in
     shellAliases = {
       ".." = "cd ../";
       "n" = "nvim";
-      "ls" = "eza -l";
-      "l" = "eza -l";
-      "ll" = "eza -al";
-      "tree" = "eza --tree";
+      "ls" = "eza --classify=auto --icons=auto --group-directories-first";
+      "l" = "eza --classify=auto --icons=auto --group-directories-first -l";
+      "ll" = "eza --classify=auto --icons=auto --group-directories-first -al";
+      "tree" = "eza --classify=auto --icons=auto --tree";
       "gg" = "lazygit";
+    };
+    functions = {
+      fish_title = {
+        body = "echo $(pwd)";
+      };
+      pb = {
+        body = ''
+          set -l target_url "https://p.apeiria.net"
+          if test (count $argv) -ge 1; and test -f "$argv[1]"
+            curl -F "c=@$argv[1]" $target_url
+          else if not isatty stdin
+            set -l temp_file (mktemp)
+            cat > $temp_file
+            curl -F "c=@$temp_file" $target_url
+            rm $temp_file
+          else
+            echo "Usage: pb <filename> OR command | pb"
+            return 1
+          end
+        '';
+      };
     };
   };
 
