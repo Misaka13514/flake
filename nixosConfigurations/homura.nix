@@ -53,6 +53,7 @@ in
     services.endlessh
     services.tor
     users.atri
+    users.byn
   ];
 
   sops.secrets = lib.mkMerge [
