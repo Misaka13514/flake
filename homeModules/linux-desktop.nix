@@ -11,6 +11,7 @@ in
   imports = [
     ./apps/ayugram-desktop
     ./apps/chromium
+    ./apps/mitmproxy
     ./apps/vscode
   ]
   ++ lib.optionals useKde [
@@ -18,7 +19,6 @@ in
   ];
 
   home.packages = with pkgs; [
-    flakePackages.burpsuite-pro
     flakePackages.ida-pro
     gimp
     hmcl

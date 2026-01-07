@@ -59,6 +59,7 @@
         "b43-firmware"
         "broadcom-bt-firmware"
         "burpsuite"
+        "charles"
         "cuda_cccl"
         "cuda_cudart"
         "cuda_nvcc"

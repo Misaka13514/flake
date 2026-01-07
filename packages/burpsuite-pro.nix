@@ -19,11 +19,16 @@ in
         else
           throw "Failed to extract Burp Jar path from runScript: ${args.runScript}";
 
-      loaderEnv = pkgs.runCommand "burpsuite-loader-env" { } ''
-        mkdir -p $out
-        cp ${loaderJar} $out/loader.jar
-        ln -s "${burpJarPath}" $out/burpsuite_pro.jar
-      '';
+      loaderEnv =
+        pkgs.runCommand "burpsuite-loader-env"
+          {
+            srcDependency = args.runScript;
+          }
+          ''
+            mkdir -p $out
+            cp ${loaderJar} $out/loader.jar
+            cp "${burpJarPath}" $out/burpsuite_pro.jar
+          '';
     in
     pkgs.buildFHSEnv (
       args
