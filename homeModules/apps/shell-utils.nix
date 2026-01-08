@@ -97,6 +97,14 @@ in
     enable = true;
   };
 
+  programs.gh = {
+    enable = true;
+    gitCredentialHelper.enable = true;
+    settings = {
+      git_protocol = "https";
+    };
+  };
+
   # Replace command-not-found with nix-index and comma
   programs.nix-index-database.comma.enable = true;
   programs.command-not-found.enable = false;

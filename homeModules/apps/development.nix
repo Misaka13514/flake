@@ -7,7 +7,7 @@
   home.packages = with pkgs; [
     # Language servers
     nixd
-    nixfmt-rfc-style
+    nixfmt
     sops
   ];
 

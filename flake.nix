@@ -207,7 +207,7 @@
           pre-commit-check = inputs.git-hooks.lib.${system}.run {
             src = ./.;
             hooks = {
-              nixfmt-rfc-style.enable = true;
+              nixfmt.enable = true;
               statix.enable = true;
             };
           };
@@ -219,7 +219,7 @@
             nixd
             just
             deploy-rs
-            nixfmt-rfc-style
+            nixfmt
             ssh-to-age
             sops
             jq
@@ -232,7 +232,7 @@
           buildInputs = checks.pre-commit-check.enabledPackages;
         };
 
-        formatter = pkgs.nixfmt-rfc-style;
+        formatter = pkgs.nixfmt;
       }
     );
 }
