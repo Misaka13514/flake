@@ -39,6 +39,12 @@ in
       inherit wallpaper;
     };
 
+    kscreenlocker = {
+      appearance = {
+        inherit wallpaper;
+      };
+    };
+
     input.touchpads = map (
       name:
       let
@@ -56,40 +62,42 @@ in
         location = "bottom";
         widgets = [
           {
-            name = "org.kde.plasma.kickoff";
-            config = {
-              General = {
-                icon = "${assetsPath}/nix-snowflake-transgender.png";
-                compactMode = true;
-                highlightNewlyInstalledApps = false;
-                switchCategoryOnHover = true;
+            kickoff = {
+              icon = "${assetsPath}/nix-snowflake-transgender.png";
+              compactDisplayStyle = true;
+              settings = {
+                General = {
+                  highlightNewlyInstalledApps = false;
+                  switchCategoryOnHover = true;
+                };
               };
             };
           }
           {
-            name = "org.kde.plasma.icontasks";
-            config = {
-              General = {
-                launchers = [
-                  "applications:org.kde.dolphin.desktop"
-                  "applications:org.kde.konsole.desktop"
-                  "applications:systemsettings.desktop"
-                  "applications:code.desktop"
-                  "applications:chromium-browser.desktop"
-                  "applications:com.ayugram.desktop.desktop"
-                ];
-              };
+            iconTasks = {
+              launchers = [
+                "applications:org.kde.dolphin.desktop"
+                "applications:org.kde.konsole.desktop"
+                "applications:systemsettings.desktop"
+                "applications:code.desktop"
+                "applications:chromium-browser.desktop"
+                "applications:com.ayugram.desktop.desktop"
+              ];
             };
           }
           "org.kde.plasma.marginsseparator"
           "org.kde.plasma.systemtray"
           {
-            name = "org.kde.plasma.digitalclock";
-            config = {
-              Appearance = {
-                showSeconds = "Always";
-                use24hFormat = "2";
-                dateFormat = "isoDate";
+            digitalClock = {
+              calendar = {
+                firstDayOfWeek = "sunday";
+              };
+              time = {
+                showSeconds = "always";
+                format = "24h";
+              };
+              date = {
+                format = "isoDate";
               };
             };
           }
@@ -107,11 +115,6 @@ in
         Automatic = false;
         Latitude = "31.242";
         Longitude = "121.495";
-      };
-
-      "kscreenlockerrc"."Greeter/Wallpaper/org.kde.image/General" = {
-        "Image" = "file://${wallpaper}";
-        "PreviewImage" = "file://${wallpaper}";
       };
 
       "plasmanotifyrc"."Services/donationmessage" = {
