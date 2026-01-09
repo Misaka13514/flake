@@ -188,13 +188,14 @@
       in
       rec {
         packages =
-          lib.filterAttrs
+          lib.mapAttrs
             (
               pname: package:
-              if (builtins.hasAttr "meta" package && builtins.hasAttr "platforms" package.meta) then
-                builtins.elem system package.meta.platforms
-              else
-                true
+              package.overrideAttrs (oldAttrs: {
+                meta = (oldAttrs.meta or { }) // {
+                  maintainers = with lib.maintainers; [ Misaka13514 ];
+                };
+              })
             )
             (
               lib.packagesFromDirectoryRecursive {

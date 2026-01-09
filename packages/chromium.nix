@@ -5,7 +5,7 @@
 }:
 
 pkgs.symlinkJoin {
-  name = "chromium";
+  inherit (pkgs.chromium) pname version meta;
   paths = [ pkgs.chromium ];
   buildInputs = [ pkgs.makeWrapper ];
   postBuild = ''
@@ -13,5 +13,4 @@ pkgs.symlinkJoin {
       --set GOOGLE_DEFAULT_CLIENT_ID ${clientId} \
       --set GOOGLE_DEFAULT_CLIENT_SECRET ${clientSecret}
   '';
-  inherit (pkgs.chromium) meta;
 }
