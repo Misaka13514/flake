@@ -13,4 +13,8 @@
       editorconfig.editorconfig
     ];
   };
+
+  noa.nixpkgs.allowedUnfreePackages = [
+    "vscode"
+  ];
 }

@@ -55,8 +55,22 @@
     nixpkgs = {
       hostPlatform = { inherit system; };
       config = {
-        # allowUnfree = true;
-        allowUnfreePredicate = unfreePredicate;
+        allowUnfreePredicate =
+          pkg:
+          let
+            pname = lib.getName pkg;
+            nixosAllowed = config.noa.nixpkgs.allowedUnfreePackages;
+            homeAllowed =
+              if (builtins.hasAttr "home-manager" config) then
+                lib.concatLists (
+                  lib.mapAttrsToList (
+                    _: userConfig: userConfig.noa.nixpkgs.allowedUnfreePackages or [ ]
+                  ) config.home-manager.users
+                )
+              else
+                [ ];
+          in
+          builtins.elem pname (nixosAllowed ++ homeAllowed);
       };
       inherit overlays;
     };
@@ -66,5 +80,10 @@
 
   options = {
     noa.nix.enableMirrorSubstituter = lib.mkEnableOption "Enable mirror for cache.nixos.org";
+    noa.nixpkgs.allowedUnfreePackages = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      description = "List of unfree packages allowed to be installed.";
+    };
   };
 }

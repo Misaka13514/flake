@@ -57,7 +57,7 @@
 
   # === End generated section ===
 
-  hardware.enableAllFirmware = true;
+  hardware.enableRedistributableFirmware = true;
 
   services.xserver.xkb = {
     layout = "jp,us";

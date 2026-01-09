@@ -133,4 +133,8 @@ in
       WantedBy = [ "default.target" ];
     };
   };
+
+  noa.nixpkgs.allowedUnfreePackages = [
+    "charles"
+  ];
 }

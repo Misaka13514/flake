@@ -55,27 +55,6 @@
       inherit (inputs.nixpkgs-2511) lib;
       secretsPath = ./secrets;
       assetsPath = ./assets;
-      unfreePackages = [
-        "b43-firmware"
-        "broadcom-bt-firmware"
-        "burpsuite"
-        "charles"
-        "cuda_cccl"
-        "cuda_cudart"
-        "cuda_nvcc"
-        "facetimehd-calibration"
-        "facetimehd-firmware"
-        "ida-pro"
-        "libcublas"
-        "nvidia-settings"
-        "nvidia-x11"
-        "obsidian"
-        "steam-unwrapped"
-        "steam"
-        "vscode"
-        "xow_dongle-firmware"
-      ];
-      unfreePredicate = pkg: builtins.elem (lib.getName pkg) unfreePackages;
 
       # This recursive attrset pattern is forbidden, but we use it here anyway.
       #
@@ -95,7 +74,6 @@
           inputs
           secretsPath
           assetsPath
-          unfreePredicate
           overlays
           nixSecrets
           ;
@@ -147,8 +125,6 @@
               inputs.nix-index-database.nixosModules.default
               inputs.sops-nix.nixosModules.sops
               inputs.vscode-server.nixosModules.default
-              # inputs.stylix.nixosModules.stylix
-              # inputs.niri.nixosModules.niri
             ];
           };
 
@@ -181,27 +157,43 @@
       let
         pkgs = import inputs.nixpkgs-unstable {
           inherit system;
-          # inherit overlays;
-          # config.allowUnfree = true;
+        };
+        unfreePackagesInput = import inputs.nixpkgs-unstable rec {
+          inherit system;
+          unfreePackages = [
+            "burpsuite"
+            "ida-pro"
+          ];
+          unfreePredicate = pkg: builtins.elem (lib.getName pkg) unfreePackages;
           config.allowUnfreePredicate = unfreePredicate;
         };
       in
       rec {
         packages =
-          lib.mapAttrs
+          lib.filterAttrs
             (
               pname: package:
-              package.overrideAttrs (oldAttrs: {
-                meta = (oldAttrs.meta or { }) // {
-                  maintainers = with lib.maintainers; [ Misaka13514 ];
-                };
-              })
+              if (builtins.hasAttr "meta" package && builtins.hasAttr "platforms" package.meta) then
+                builtins.elem system package.meta.platforms
+              else
+                true
             )
             (
-              lib.packagesFromDirectoryRecursive {
-                inherit (pkgs) callPackage;
-                directory = ./packages;
-              }
+              lib.mapAttrs
+                (
+                  pname: package:
+                  package.overrideAttrs (oldAttrs: {
+                    meta = (oldAttrs.meta or { }) // {
+                      maintainers = with lib.maintainers; [ Misaka13514 ];
+                    };
+                  })
+                )
+                (
+                  lib.packagesFromDirectoryRecursive {
+                    inherit (unfreePackagesInput) callPackage;
+                    directory = ./packages;
+                  }
+                )
             );
 
         checks = {

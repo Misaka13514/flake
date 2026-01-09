@@ -80,7 +80,7 @@
 
   # === End generated section ===
 
-  hardware.enableAllFirmware = true;
+  hardware.enableRedistributableFirmware = true;
 
   # Enable OpenGL
   hardware.graphics = {
@@ -149,4 +149,13 @@
       };
     };
   };
+
+  noa.nixpkgs.allowedUnfreePackages = [
+    "cuda_cccl"
+    "cuda_cudart"
+    "cuda_nvcc"
+    "libcublas"
+    "nvidia-settings"
+    "nvidia-x11"
+  ];
 }

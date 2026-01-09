@@ -62,4 +62,8 @@ in
       ];
     };
   };
+
+  noa.nixpkgs.allowedUnfreePackages = [
+    "obsidian"
+  ];
 }
