@@ -64,6 +64,7 @@ in
   };
 
   noa.nixpkgs.allowedUnfreePackages = [
+    "ida-pro"
     "obsidian"
   ];
 }

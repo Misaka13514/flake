@@ -135,6 +135,7 @@ in
   };
 
   noa.nixpkgs.allowedUnfreePackages = [
+    "burpsuite"
     "charles"
   ];
 }

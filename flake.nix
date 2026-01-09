@@ -169,32 +169,10 @@
         };
       in
       rec {
-        packages =
-          lib.filterAttrs
-            (
-              pname: package:
-              if (builtins.hasAttr "meta" package && builtins.hasAttr "platforms" package.meta) then
-                builtins.elem system package.meta.platforms
-              else
-                true
-            )
-            (
-              lib.mapAttrs
-                (
-                  pname: package:
-                  package.overrideAttrs (oldAttrs: {
-                    meta = (oldAttrs.meta or { }) // {
-                      maintainers = with lib.maintainers; [ Misaka13514 ];
-                    };
-                  })
-                )
-                (
-                  lib.packagesFromDirectoryRecursive {
-                    inherit (unfreePackagesInput) callPackage;
-                    directory = ./packages;
-                  }
-                )
-            );
+        packages = import ./lib/mkMyPackages.nix {
+          pkgs = unfreePackagesInput;
+          inherit (unfreePackagesInput) lib;
+        };
 
         checks = {
           pre-commit-check = inputs.git-hooks.lib.${system}.run {
