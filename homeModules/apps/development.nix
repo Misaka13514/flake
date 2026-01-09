@@ -1,8 +1,4 @@
-{
-  pkgs,
-  unstablePkgs,
-  ...
-}:
+{ pkgs, ... }:
 {
   home.packages = with pkgs; [
     # Language servers

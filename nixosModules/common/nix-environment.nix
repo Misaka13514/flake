@@ -2,13 +2,10 @@
   config,
   pkgs,
   lib,
-  inputs,
   overlays,
-  unfreePredicate,
   system,
   ...
 }:
-
 {
   config = {
     environment.systemPackages = with pkgs; [

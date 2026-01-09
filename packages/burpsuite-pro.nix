@@ -1,5 +1,7 @@
-{ pkgs, lib }:
-
+{
+  pkgs,
+  lib,
+}:
 let
   loaderJar = pkgs.fetchurl {
     url = "https://raw.githubusercontent.com/h3110w0r1d-y/BurpLoaderKeygen/a95136d57f65e814b327142b1f2bdce1bc06bdf9/BurpLoaderKeygen_v1.17.jar";

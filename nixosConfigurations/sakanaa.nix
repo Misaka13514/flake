@@ -1,11 +1,9 @@
 # sakanaa: takina-touching NixOS configuration
 # CN.PVG Homelab
 {
-  lib,
   pkgs,
   config,
   nixosModules,
-  homeModules,
   secretsPath,
   nixSecrets,
   ...

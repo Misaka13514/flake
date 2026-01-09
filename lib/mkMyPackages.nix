@@ -2,7 +2,6 @@
   pkgs,
   lib,
 }:
-
 let
   rawPackages = lib.packagesFromDirectoryRecursive {
     inherit (pkgs) callPackage;
@@ -17,7 +16,6 @@ let
       };
     })
   ) rawPackages;
-
 in
 lib.filterAttrs (
   name: pkg:

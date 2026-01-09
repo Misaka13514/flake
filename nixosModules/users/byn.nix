@@ -1,8 +1,5 @@
 # byn: 世界第一可爱
-{
-  pkgs,
-  ...
-}:
+{ pkgs, ... }:
 {
   config = {
     users.users."byn" = {

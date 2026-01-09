@@ -13,7 +13,6 @@
   libGL,
   libkrb5,
   libsecret,
-
   libunwind,
   libxkbcommon,
   makeWrapper,
@@ -23,7 +22,6 @@
   xorg,
   zlib,
 }:
-
 stdenv.mkDerivation (finalAttrs: rec {
   pname = "ida-pro";
   version = "9.2";

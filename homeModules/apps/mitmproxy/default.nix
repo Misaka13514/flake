@@ -4,7 +4,6 @@
   secretsPath,
   ...
 }:
-
 let
   mitmDir = "${config.home.homeDirectory}/.mitmproxy";
   pemFile = "${mitmDir}/mitmproxy-ca.pem";

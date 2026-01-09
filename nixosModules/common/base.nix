@@ -5,7 +5,6 @@
   nixSecrets,
   ...
 }:
-
 let
   knownHosts = {
     "github.com" = {

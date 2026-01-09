@@ -1,8 +1,6 @@
 # KVM/QEMU x86_64 guest, just for testing purposes
 {
-  config,
   lib,
-  pkgs,
   modulesPath,
   ...
 }:

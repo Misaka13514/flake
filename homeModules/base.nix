@@ -1,7 +1,6 @@
 {
   lib,
   username,
-  secretsPath,
   osConfig,
   system,
   pkgs,

@@ -4,7 +4,6 @@
   tdesktopApiId ? null,
   tdesktopApiHash ? null,
 }:
-
 pkgs.ayugram-desktop.override {
   telegram-desktop = pkgs.telegram-desktop.override {
     unwrapped = pkgs.telegram-desktop.unwrapped.overrideAttrs (oldAttrs: {

@@ -48,7 +48,6 @@
       nixpkgs-2511,
       nixpkgs-unstable,
       flake-utils,
-      nix-secrets,
       ...
     }:
     let
