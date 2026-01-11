@@ -12,6 +12,8 @@
     gui.steam
     gui.wireshark
     services.docker
+    services.mdns
+    services.printing
     services.vscode-server
     hardware.bluetooth
     users.atri

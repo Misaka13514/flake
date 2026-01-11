@@ -38,8 +38,37 @@ in
     };
 
     kscreenlocker = {
+      timeout = 15;
+      passwordRequiredDelay = 30;
       appearance = {
         inherit wallpaper;
+      };
+    };
+
+    powerdevil = {
+      AC = {
+        dimDisplay.enable = true;
+        dimDisplay.idleTimeout = 600;
+        turnOffDisplay.idleTimeout = 900;
+        autoSuspend.action = "sleep";
+        autoSuspend.idleTimeout = 1200;
+        powerProfile = "performance";
+      };
+      battery = {
+        dimDisplay.enable = true;
+        dimDisplay.idleTimeout = 120;
+        turnOffDisplay.idleTimeout = 300;
+        autoSuspend.action = "sleep";
+        autoSuspend.idleTimeout = 600;
+        powerProfile = "balanced";
+      };
+      lowBattery = {
+        dimDisplay.enable = true;
+        dimDisplay.idleTimeout = 60;
+        turnOffDisplay.idleTimeout = 120;
+        autoSuspend.action = "sleep";
+        autoSuspend.idleTimeout = 300;
+        powerProfile = "powerSaving";
       };
     };
 
