@@ -11,6 +11,7 @@
     gui.obs-studio
     gui.steam
     gui.wireshark
+    services.arch-vm
     services.docker
     services.mdns
     services.printing
