@@ -4,8 +4,8 @@
 }:
 let
   loaderJar = pkgs.fetchurl {
-    url = "https://raw.githubusercontent.com/h3110w0r1d-y/BurpLoaderKeygen/a95136d57f65e814b327142b1f2bdce1bc06bdf9/BurpLoaderKeygen_v1.17.jar";
-    hash = "sha256-3N8orPNgVUpamNePQDyWzOpQC+JLJ9ArAg4UKCBjfAo=";
+    url = "https://raw.githubusercontent.com/h3110w0r1d-y/BurpLoaderKeygen/0000118000aca6b2ebe9fdd8b7e9696dde3b7664/BurpLoaderKeygen_v1.18.jar";
+    hash = "sha256-2WnidmXz09wJzPp4jvVe1yeBgTbUiTfsa/CDY4y9dLI=";
   };
 in
 (pkgs.burpsuite.override {
