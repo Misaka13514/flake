@@ -16,7 +16,9 @@
       homuraIpv6Gateway = null;
       homuraDomain = "example.org";
       homuraDomainCdn = "cdn.example.org";
+      homuraDomainHack = "hack.example.org";
       homuraWsPath = "/vmess";
+      headscaleDomain = "hs.example.org";
     };
   };
 }

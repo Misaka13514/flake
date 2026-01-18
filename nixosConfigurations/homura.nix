@@ -44,6 +44,29 @@ let
       sha256 = "1ad09hijignj6zlqvdjxv7rjj8567z357zfavv201b9vx3ikk7cy";
     }
   );
+
+  proxyDomains = [
+    nixSecrets.homuraDomain
+    nixSecrets.homuraDomainCdn
+    nixSecrets.homuraDomainHack
+  ];
+
+  mkWsVhost = domainName: {
+    name = domainName;
+    value = {
+      useACMEHost = domain;
+      forceSSL = true;
+      locations."/robots.txt".extraConfig = ''
+        add_header Content-Type text/plain;
+        return 200 "User-agent: *\nDisallow: /";
+      '';
+      locations."${nixSecrets.homuraWsPath}" = {
+        proxyPass = "http://127.0.0.1:10000";
+        proxyWebsockets = true;
+      };
+    };
+  };
+
 in
 {
   imports = with nixosModules; [
@@ -153,60 +176,29 @@ in
       real_ip_header CF-Connecting-IP;
     '';
 
-    virtualHosts = {
-      "_" = {
-        default = true;
-        rejectSSL = true;
-        extraConfig = ''
-          return 444;
-        '';
-      };
+    virtualHosts = lib.mkMerge [
+      {
+        "_" = {
+          default = true;
+          rejectSSL = true;
+          extraConfig = "return 444;";
+        };
 
-      "${nixSecrets.headscaleDomain}" = {
-        useACMEHost = domain;
-        forceSSL = true;
-        locations."/robots.txt" = {
-          extraConfig = ''
+        "${nixSecrets.headscaleDomain}" = {
+          useACMEHost = domain;
+          forceSSL = true;
+          locations."/robots.txt".extraConfig = ''
             add_header Content-Type text/plain;
             return 200 "User-agent: *\nDisallow: /";
           '';
+          locations."/" = {
+            proxyPass = "http://127.0.0.1:${toString config.services.headscale.port}";
+            proxyWebsockets = true;
+          };
         };
-        locations."/" = {
-          proxyPass = "http://127.0.0.1:${toString config.services.headscale.port}";
-          proxyWebsockets = true;
-        };
-      };
-
-      "${nixSecrets.homuraDomain}" = {
-        useACMEHost = domain;
-        forceSSL = true;
-        locations."/robots.txt" = {
-          extraConfig = ''
-            add_header Content-Type text/plain;
-            return 200 "User-agent: *\nDisallow: /";
-          '';
-        };
-        locations."${nixSecrets.homuraWsPath}" = {
-          proxyPass = "http://127.0.0.1:10000";
-          proxyWebsockets = true;
-        };
-      };
-
-      "${nixSecrets.homuraDomainCdn}" = {
-        useACMEHost = domain;
-        forceSSL = true;
-        locations."/robots.txt" = {
-          extraConfig = ''
-            add_header Content-Type text/plain;
-            return 200 "User-agent: *\nDisallow: /";
-          '';
-        };
-        locations."${nixSecrets.homuraWsPath}" = {
-          proxyPass = "http://127.0.0.1:10000";
-          proxyWebsockets = true;
-        };
-      };
-    };
+      }
+      (lib.listToAttrs (map mkWsVhost proxyDomains))
+    ];
   };
 
   users.users.sing-box.extraGroups = [ "acme" ];
