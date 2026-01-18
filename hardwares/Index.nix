@@ -79,6 +79,13 @@
 
   # === End generated section ===
 
+  # Disable experimental Intel Xe graphics driver
+  # https://docs.kernel.org/gpu/xe/index.html
+  boot.kernelParams = [
+    "i915.force_probe=9a60"
+    "xe.force_probe=!9a60"
+  ];
+
   hardware.enableRedistributableFirmware = true;
 
   # Enable OpenGL
