@@ -11,24 +11,6 @@
 }:
 let
   domain = "apeiria.net";
-  singBoxUsers = [
-    "user1"
-    "user2"
-    "user3"
-  ];
-  singBoxRoutes = [
-    "direct"
-    "warp"
-    "tor"
-  ];
-  singBoxAccounts = lib.concatMap (
-    u:
-    map (r: {
-      user = u;
-      route = r;
-      name = "${u}-${r}";
-    }) singBoxRoutes
-  ) singBoxUsers;
 
   realIpsFromList = lib.strings.concatMapStringsSep "\n" (x: "set_real_ip_from  ${x};");
   fileToList = x: lib.strings.splitString "\n" (builtins.readFile x);
@@ -45,28 +27,6 @@ let
     }
   );
 
-  proxyDomains = [
-    nixSecrets.homuraDomain
-    nixSecrets.homuraDomainCdn
-    nixSecrets.homuraDomainHack
-  ];
-
-  mkWsVhost = domainName: {
-    name = domainName;
-    value = {
-      useACMEHost = domain;
-      forceSSL = true;
-      locations."/robots.txt".extraConfig = ''
-        add_header Content-Type text/plain;
-        return 200 "User-agent: *\nDisallow: /";
-      '';
-      locations."${nixSecrets.homuraWsPath}" = {
-        proxyPass = "http://127.0.0.1:10000";
-        proxyWebsockets = true;
-      };
-    };
-  };
-
 in
 {
   imports = with nixosModules; [
@@ -74,34 +34,17 @@ in
     diskLayouts.gpt-bios-compat
     services.docker
     services.endlessh
+    services.headscale
+    services.sing-box
     services.tor
     users.atri
     users.byn
   ];
 
-  sops.secrets = lib.mkMerge [
-    {
-      "cloudflare-api-token" = {
-        format = "yaml";
-        sopsFile = "${secretsPath}/cloudflare.yaml";
-      };
-      "sing-box/warp-private-key" = {
-        format = "yaml";
-        sopsFile = "${secretsPath}/sing-box.yaml";
-        restartUnits = [ "sing-box.service" ];
-      };
-    }
-    (lib.listToAttrs (
-      map (acc: {
-        name = "sing-box/${acc.user}/${acc.route}";
-        value = {
-          format = "yaml";
-          sopsFile = "${secretsPath}/sing-box.yaml";
-          restartUnits = [ "sing-box.service" ];
-        };
-      }) singBoxAccounts
-    ))
-  ];
+  sops.secrets."cloudflare-api-token" = {
+    format = "yaml";
+    sopsFile = "${secretsPath}/cloudflare.yaml";
+  };
 
   networking.firewall = {
     allowedTCPPorts = [ 443 ];
@@ -146,22 +89,6 @@ in
     };
   };
 
-  services.headscale = {
-    enable = true;
-    address = "127.0.0.1";
-    port = 40180;
-    settings = {
-      server_url = "https://${nixSecrets.headscaleDomain}";
-      dns = {
-        magic_dns = true;
-        base_domain = "paths.${domain}";
-        override_local_dns = false;
-      };
-      prefixes.allocation = "random";
-      derp.server.enable = false;
-    };
-  };
-
   users.users.nginx.extraGroups = [ "acme" ];
   services.nginx = {
     enable = true;
@@ -176,155 +103,10 @@ in
       real_ip_header CF-Connecting-IP;
     '';
 
-    virtualHosts = lib.mkMerge [
-      {
-        "_" = {
-          default = true;
-          rejectSSL = true;
-          extraConfig = "return 444;";
-        };
-
-        "${nixSecrets.headscaleDomain}" = {
-          useACMEHost = domain;
-          forceSSL = true;
-          locations."/robots.txt".extraConfig = ''
-            add_header Content-Type text/plain;
-            return 200 "User-agent: *\nDisallow: /";
-          '';
-          locations."/" = {
-            proxyPass = "http://127.0.0.1:${toString config.services.headscale.port}";
-            proxyWebsockets = true;
-          };
-        };
-      }
-      (lib.listToAttrs (map mkWsVhost proxyDomains))
-    ];
-  };
-
-  users.users.sing-box.extraGroups = [ "acme" ];
-  services.sing-box = {
-    enable = true;
-    settings = {
-      log = {
-        level = "info";
-        timestamp = true;
-      };
-
-      dns = {
-        servers = [
-          {
-            type = "https";
-            tag = "google-doh";
-            server = "dns.google";
-            domain_resolver = "google-udp";
-          }
-          {
-            type = "udp";
-            tag = "google-udp";
-            server = "8.8.8.8";
-          }
-        ];
-        strategy = "prefer_ipv6";
-      };
-
-      endpoints = [
-        {
-          type = "wireguard";
-          tag = "warp";
-          system = false;
-          address = [
-            "172.16.0.2/32"
-            "2606:4700:110:8dbb:718:1dfe:c619:6e73/128"
-          ];
-          private_key = {
-            _secret = config.sops.secrets."sing-box/warp-private-key".path;
-          };
-          peers = [
-            {
-              address = "engage.cloudflareclient.com";
-              port = 2408;
-              public_key = "bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=";
-              allowed_ips = [
-                "0.0.0.0/0"
-                "::/0"
-              ];
-              reserved = "FiCd";
-            }
-          ];
-        }
-      ];
-
-      inbounds = [
-        {
-          type = "vmess";
-          tag = "vmess-in";
-          listen = "127.0.0.1";
-          listen_port = 10000;
-          transport = {
-            type = "ws";
-            path = "${nixSecrets.homuraWsPath}";
-          };
-          users = map (acc: {
-            inherit (acc) name;
-            uuid = {
-              _secret = config.sops.secrets."sing-box/${acc.user}/${acc.route}".path;
-            };
-          }) singBoxAccounts;
-        }
-        {
-          type = "hysteria2";
-          tag = "hy2-in";
-          listen = "::";
-          listen_port = 443;
-          tls = {
-            enabled = true;
-            certificate_path = "/var/lib/acme/${domain}/fullchain.pem";
-            key_path = "/var/lib/acme/${domain}/key.pem";
-          };
-          users = map (acc: {
-            inherit (acc) name;
-            password = {
-              _secret = config.sops.secrets."sing-box/${acc.user}/${acc.route}".path;
-            };
-          }) singBoxAccounts;
-        }
-      ];
-
-      outbounds = [
-        {
-          type = "direct";
-          tag = "direct";
-        }
-        {
-          type = "socks";
-          tag = "tor";
-          server = "127.0.0.1";
-          server_port = 9050;
-        }
-      ];
-
-      route = {
-        final = "direct";
-        default_domain_resolver = "google-doh";
-        rules = [
-          { action = "sniff"; }
-        ]
-        ++ (lib.concatMap
-          (targetRoute: [
-            (
-              {
-                auth_user = map (acc: acc.name) (builtins.filter (x: x.route == targetRoute) singBoxAccounts);
-                outbound = targetRoute;
-              }
-              // (lib.optionalAttrs (targetRoute == "tor") { network = [ "tcp" ]; })
-            )
-          ])
-          [
-            "warp"
-            "tor"
-          ]
-        );
-      };
+    virtualHosts."_" = {
+      default = true;
+      rejectSSL = true;
+      extraConfig = "return 444;";
     };
   };
 }
