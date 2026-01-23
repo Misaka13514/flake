@@ -35,6 +35,7 @@ in
     services.docker
     services.endlessh
     services.headscale
+    services.maubot
     services.sing-box
     services.tor
     users.atri
