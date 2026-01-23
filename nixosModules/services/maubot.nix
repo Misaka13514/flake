@@ -16,6 +16,10 @@ in
   services.nginx.virtualHosts."maubot.${domain}" = {
     useACMEHost = domain;
     forceSSL = true;
+    locations."/robots.txt".extraConfig = ''
+      add_header Content-Type text/plain;
+      return 200 "User-agent: *\nDisallow: /";
+    '';
     locations."/" = {
       proxyPass = "http://127.0.0.1:29316";
       proxyWebsockets = true;
