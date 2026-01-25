@@ -36,6 +36,7 @@ in
     services.endlessh
     services.headscale
     services.maubot
+    services.rclone
     services.sing-box
     services.tor
     users.atri
@@ -45,6 +46,24 @@ in
   sops.secrets."cloudflare-api-token" = {
     format = "yaml";
     sopsFile = "${secretsPath}/cloudflare.yaml";
+  };
+
+  sops.secrets."rclone-conf" = {
+    format = "yaml";
+    sopsFile = "${secretsPath}/rclone.yaml";
+  };
+
+  noa.rclone = {
+    enable = true;
+    mountPoint = "/mnt/cloud";
+    rcloneRemote = "crypt:";
+    rcloneConfigPath = config.sops.secrets."rclone-conf".path;
+    allowUsers = true;
+    consistencyCheck = {
+      enable = true;
+      sourceRemote = "gdrive:cloud";
+      targetRemote = "onedrive:cloud";
+    };
   };
 
   networking.firewall = {
