@@ -19,6 +19,8 @@
       homuraDomainHack = "hack.example.org";
       homuraWsPath = "/vmess";
       headscaleDomain = "hs.example.org";
+      webdavDomain = "dav.example.org";
+      webdavDomainCdn = "cdn.example.org";
     };
   };
 }
