@@ -38,6 +38,7 @@ in
     services.maubot
     services.rclone
     services.sing-box
+    services.tailscale
     services.tor
     users.atri
     users.byn
@@ -57,6 +58,10 @@ in
     format = "yaml";
     sopsFile = "${secretsPath}/rclone.yaml";
     owner = "nginx";
+  };
+
+  noa.tailscale = {
+    advertiseExitNode = true;
   };
 
   noa.rclone = {

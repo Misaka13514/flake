@@ -12,6 +12,14 @@ creation_rules:
         age:
           - *host_sakanaa
           - *host_homura
+  - path_regex: secrets/tailscale.yaml$
+    key_groups:
+      - pgp:
+          - *admin_atri
+        age:
+          - *host_sakanaa
+          - *host_Index
+          - *host_homura
   - path_regex: secrets/sing-box.yaml$
     key_groups:
       - pgp:
