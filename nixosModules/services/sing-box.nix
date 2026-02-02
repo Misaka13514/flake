@@ -27,28 +27,6 @@ let
     }) singBoxRoutes
   ) singBoxUsers;
 
-  proxyDomains = [
-    nixSecrets.homuraDomain
-    nixSecrets.homuraDomainCdn
-    nixSecrets.homuraDomainHack
-  ];
-
-  mkWsVhost = domainName: {
-    name = domainName;
-    value = {
-      useACMEHost = domain;
-      forceSSL = true;
-      locations."/robots.txt".extraConfig = ''
-        add_header Content-Type text/plain;
-        return 200 "User-agent: *\nDisallow: /";
-      '';
-      locations."${nixSecrets.homuraWsPath}" = {
-        proxyPass = "http://127.0.0.1:10000";
-        proxyWebsockets = true;
-      };
-    };
-  };
-
 in
 {
   sops.secrets = lib.mkMerge [
@@ -198,5 +176,20 @@ in
     };
   };
 
-  services.nginx.virtualHosts = lib.listToAttrs (map mkWsVhost proxyDomains);
+  services.nginx.virtualHosts."${nixSecrets.homuraDomain}" = {
+    serverAliases = [
+      nixSecrets.homuraDomainCdn
+      nixSecrets.homuraDomainHack
+    ];
+    useACMEHost = domain;
+    forceSSL = true;
+    locations."/robots.txt".extraConfig = ''
+      add_header Content-Type text/plain;
+      return 200 "User-agent: *\nDisallow: /";
+    '';
+    locations."${nixSecrets.homuraWsPath}" = {
+      proxyPass = "http://127.0.0.1:10000";
+      proxyWebsockets = true;
+    };
+  };
 }
