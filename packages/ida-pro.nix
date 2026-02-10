@@ -29,7 +29,7 @@ stdenv.mkDerivation (finalAttrs: rec {
   # https://auth.lol/ida
   src = fetchtorrent {
     name = "ida-pro-src";
-    url = "magnet:?xt=urn:btih:ce86306a417dd64fab8d26a4983a58412008aa9e&dn=ida92&tr=http%3A%2F%2Ftracker.mywaifu.best%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.qu.ax%3A6969%2Fannounce&tr=http%3A%2F%2Ftracker.renfei.net%3A8080%2Fannounce&tr=https%3A%2F%2Ftracker.bjut.jp%3A443%2Fannounce&tr=http%3A%2F%2Ffleira.no%3A6969%2Fannounce";
+    url = "https://hexrays.su/ida92/ida92.torrent";
     hash = "sha256-KvAmdzgBMlxeYKhjAQSGI2FwhMF2C5BcJvVz0bk6Ito=";
   };
 

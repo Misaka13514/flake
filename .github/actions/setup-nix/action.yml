@@ -1,0 +1,66 @@
+name: "Setup Nix & Attic"
+description: "Installs Nix, configures Magic Cache, and sets up Attic"
+
+inputs:
+  attic-endpoint:
+    description: "Attic Server Endpoint"
+    required: false
+  attic-cache:
+    description: "Attic Cache Name"
+    required: false
+  attic-token:
+    description: "Attic Authentication Token"
+    required: false
+  use-magic-cache:
+    description: "Use Magic Cache for Nix builds"
+    required: false
+    default: "true"
+  maximize-space:
+    description: "Maximize build space (remove dotnet, android, etc)"
+    required: false
+    default: "true"
+  tmate-debug:
+    description: "Enable tmate debugging session"
+    required: false
+    default: "false"
+  tmate-detached:
+    description: "Run tmate debugging session in detached mode"
+    required: false
+    default: "true"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Maximize build space
+      if: inputs.maximize-space == 'true'
+      uses: easimon/maximize-build-space@master
+      with:
+        remove-dotnet: true
+        remove-android: true
+        remove-haskell: true
+        remove-codeql: true
+        remove-docker-images: true
+        build-mount-path: "/nix"
+
+    - uses: cachix/install-nix-action@v31
+      with:
+        extra_nix_config: |
+          download-attempts = 10
+
+    - uses: DeterminateSystems/magic-nix-cache-action@v13
+      if: inputs.use-magic-cache == 'true'
+
+    - name: Setup Attic Cache
+      uses: ryanccn/attic-action@v0.4.1
+      if: inputs.attic-endpoint != '' && inputs.attic-cache != '' && inputs.attic-token != ''
+      with:
+        endpoint: ${{ inputs.attic-endpoint }}
+        cache: ${{ inputs.attic-cache }}
+        token: ${{ inputs.attic-token }}
+        skip-push: true
+
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
+      if: inputs.tmate-debug == 'true'
+      with:
+        detached: ${{ inputs.tmate-detached }}

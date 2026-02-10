@@ -30,7 +30,14 @@ jobs:
       packages: ${{ steps.set-matrix.outputs.packages }}
     steps:
       - uses: actions/checkout@v6
-      - uses: cachix/install-nix-action@v31
+
+      - name: Setup Nix Environment
+        uses: ./.github/actions/setup-nix
+        with:
+          use-magic-cache: "false"
+          maximize-space: "false"
+          tmate-debug: ${{ inputs.debug_enabled }}
+          tmate-detached: ${{ inputs.debug_detached }}
 
       - name: Generate Build Matrix
         id: set-matrix
@@ -51,31 +58,16 @@ jobs:
       matrix:
         host: ${{ fromJson(needs.generate-matrix.outputs.hosts) }}
     steps:
-      - name: Maximize build space
-        uses: easimon/maximize-build-space@master
-        with:
-          remove-dotnet: true
-          remove-android: true
-          remove-haskell: true
-          remove-codeql: true
-          remove-docker-images: true
-          build-mount-path: "/nix"
-
       - uses: actions/checkout@v6
-      - uses: cachix/install-nix-action@v31
 
-      - name: Setup Attic Cache
-        uses: ryanccn/attic-action@v0.4.1
+      - name: Setup Nix Environment
+        uses: ./.github/actions/setup-nix
         with:
-          endpoint: ${{ secrets.ATTIC_ENDPOINT }}
-          cache: ${{ secrets.ATTIC_CACHE }}
-          token: ${{ secrets.ATTIC_TOKEN }}
-
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
-        with:
-          detached: ${{ inputs.debug_detached }}
+          attic-endpoint: ${{ secrets.ATTIC_ENDPOINT }}
+          attic-cache: ${{ secrets.ATTIC_CACHE }}
+          attic-token: ${{ secrets.ATTIC_TOKEN }}
+          tmate-debug: ${{ inputs.debug_enabled }}
+          tmate-detached: ${{ inputs.debug_detached }}
 
       - name: Check Cache & Build System
         env:
@@ -121,7 +113,7 @@ jobs:
           echo "::endgroup::"
 
           echo "::group::🔨 Building & Pushing"
-          attic watch-store "$ATTIC_CACHE" &
+          attic watch-store -j 1 "$ATTIC_CACHE" &
           WATCH_PID=$!
 
           nix build -L "$BUILD_ATTR" --override-input nix-secrets ./nix-secrets-dummy
@@ -129,7 +121,7 @@ jobs:
           kill $WATCH_PID || true
           wait $WATCH_PID || true
 
-          attic push "$ATTIC_CACHE" "$OUT_PATH"
+          attic push -j 1 "$ATTIC_CACHE" "$OUT_PATH"
           echo "::endgroup::"
 
           echo "::group::📊 Generating Analysis"
@@ -165,31 +157,16 @@ jobs:
       matrix:
         package: ${{ fromJson(needs.generate-matrix.outputs.packages) }}
     steps:
-      - name: Maximize build space
-        uses: easimon/maximize-build-space@master
-        with:
-          remove-dotnet: true
-          remove-android: true
-          remove-haskell: true
-          remove-codeql: true
-          remove-docker-images: true
-          build-mount-path: "/nix"
-
       - uses: actions/checkout@v6
-      - uses: cachix/install-nix-action@v31
 
-      - name: Setup Attic Cache
-        uses: ryanccn/attic-action@v0.4.1
+      - name: Setup Nix Environment
+        uses: ./.github/actions/setup-nix
         with:
-          endpoint: ${{ secrets.ATTIC_ENDPOINT }}
-          cache: ${{ secrets.ATTIC_CACHE }}
-          token: ${{ secrets.ATTIC_TOKEN }}
-
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
-        with:
-          detached: ${{ inputs.debug_detached }}
+          attic-endpoint: ${{ secrets.ATTIC_ENDPOINT }}
+          attic-cache: ${{ secrets.ATTIC_CACHE }}
+          attic-token: ${{ secrets.ATTIC_TOKEN }}
+          tmate-debug: ${{ inputs.debug_enabled }}
+          tmate-detached: ${{ inputs.debug_detached }}
 
       - name: Check Cache & Build Package
         env:
@@ -235,7 +212,7 @@ jobs:
           echo "::endgroup::"
 
           echo "::group::🔨 Building & Pushing"
-          attic watch-store "$ATTIC_CACHE" &
+          attic watch-store -j 1 "$ATTIC_CACHE" &
           WATCH_PID=$!
 
           nix build -L "$BUILD_ATTR" --override-input nix-secrets ./nix-secrets-dummy
@@ -243,7 +220,7 @@ jobs:
           kill $WATCH_PID || true
           wait $WATCH_PID || true
 
-          attic push "$ATTIC_CACHE" "$OUT_PATH"
+          attic push -j 1 "$ATTIC_CACHE" "$OUT_PATH"
           echo "::endgroup::"
 
           echo "::group::📊 Generating Analysis"
