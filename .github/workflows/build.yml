@@ -165,6 +165,7 @@ jobs:
           attic-endpoint: ${{ secrets.ATTIC_ENDPOINT }}
           attic-cache: ${{ secrets.ATTIC_CACHE }}
           attic-token: ${{ secrets.ATTIC_TOKEN }}
+          maximize-space: "false"
           tmate-debug: ${{ inputs.debug_enabled }}
           tmate-detached: ${{ inputs.debug_detached }}
 
