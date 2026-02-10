@@ -18,7 +18,7 @@ inputs:
   maximize-space:
     description: "Maximize build space (remove dotnet, android, etc)"
     required: false
-    default: "true"
+    default: "false"
   tmate-debug:
     description: "Enable tmate debugging session"
     required: false

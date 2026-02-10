@@ -23,7 +23,22 @@ permissions:
   id-token: write
 
 jobs:
+  check-flake:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Setup Nix Environment
+        uses: ./.github/actions/setup-nix
+        with:
+          tmate-debug: ${{ inputs.debug_enabled }}
+          tmate-detached: ${{ inputs.debug_detached }}
+
+      - name: Run Flake Check
+        run: |
+          nix flake check -L --keep-going --override-input nix-secrets ./nix-secrets-dummy
+
   generate-matrix:
+    needs: check-flake
     runs-on: ubuntu-latest
     outputs:
       hosts: ${{ steps.set-matrix.outputs.hosts }}
@@ -35,7 +50,6 @@ jobs:
         uses: ./.github/actions/setup-nix
         with:
           use-magic-cache: "false"
-          maximize-space: "false"
           tmate-debug: ${{ inputs.debug_enabled }}
           tmate-detached: ${{ inputs.debug_detached }}
 
@@ -45,108 +59,8 @@ jobs:
           JSON=$(nix flake show --json --override-input nix-secrets ./nix-secrets-dummy)
           HOSTS=$(echo "$JSON" | jq -c '.nixosConfigurations | keys')
           PACKAGES=$(echo "$JSON" | jq -c '.packages."x86_64-linux" // {} | keys')
-
           echo "hosts=$HOSTS" >> $GITHUB_OUTPUT
           echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
-
-  build-hosts:
-    needs: generate-matrix
-    if: ${{ needs.generate-matrix.outputs.hosts != '[]' }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        host: ${{ fromJson(needs.generate-matrix.outputs.hosts) }}
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Setup Nix Environment
-        uses: ./.github/actions/setup-nix
-        with:
-          attic-endpoint: ${{ secrets.ATTIC_ENDPOINT }}
-          attic-cache: ${{ secrets.ATTIC_CACHE }}
-          attic-token: ${{ secrets.ATTIC_TOKEN }}
-          tmate-debug: ${{ inputs.debug_enabled }}
-          tmate-detached: ${{ inputs.debug_detached }}
-
-      - name: Check Cache & Build System
-        env:
-          ATTIC_ENDPOINT: ${{ secrets.ATTIC_ENDPOINT }}
-          ATTIC_CACHE: ${{ secrets.ATTIC_CACHE }}
-          ATTIC_TOKEN: ${{ secrets.ATTIC_TOKEN }}
-          HOST: ${{ matrix.host }}
-        run: |
-          echo "::group::🔍 Calculating Output Path"
-          EVAL_ATTR=".#nixosConfigurations.$HOST.config.system.build.toplevel.outPath"
-          BUILD_ATTR=".#nixosConfigurations.$HOST.config.system.build.toplevel"
-
-          OUT_PATH=$(nix eval --raw "$EVAL_ATTR" --override-input nix-secrets ./nix-secrets-dummy)
-          STORE_HASH=$(echo "$OUT_PATH" | awk -F/ '{print $4}' | awk -F- '{print $1}')
-
-          echo "Store Path: $OUT_PATH"
-          echo "Hash: $STORE_HASH"
-          echo "::endgroup::"
-
-          echo "::group::📡 Checking Attic Cache"
-          CACHE_URL="${ATTIC_ENDPOINT%/}/$ATTIC_CACHE/$STORE_HASH.narinfo"
-
-          if curl --output /dev/null --silent --head --fail \
-              -H "Authorization: Bearer $ATTIC_TOKEN" \
-              "$CACHE_URL"; then
-
-            echo "✅ Cache HIT: Path exists."
-            echo "Skipping build."
-
-            NARINFO=$(curl -s -H "Authorization: Bearer $ATTIC_TOKEN" "$CACHE_URL")
-            NAR_SIZE=$(echo "$NARINFO" | grep "^NarSize:" | awk '{print $2}')
-            HUMAN_SIZE=$(numfmt --to=iec-i --suffix=B "$NAR_SIZE")
-
-            echo "### ✅ $HOST: Cached" >> $GITHUB_STEP_SUMMARY
-            echo "**Nar Size:** $HUMAN_SIZE (Toplevel only)" >> $GITHUB_STEP_SUMMARY
-            echo "**Path:** \`$OUT_PATH\`" >> $GITHUB_STEP_SUMMARY
-            echo "::endgroup::"
-            exit 0
-          else
-            echo "⚠️ Cache MISS: Path not found. Building..."
-            echo "### 🔨 $HOST: Building" >> $GITHUB_STEP_SUMMARY
-          fi
-          echo "::endgroup::"
-
-          echo "::group::🔨 Building & Pushing"
-          attic watch-store -j 1 "$ATTIC_CACHE" &
-          WATCH_PID=$!
-
-          nix build -L "$BUILD_ATTR" --override-input nix-secrets ./nix-secrets-dummy
-
-          kill $WATCH_PID || true
-          wait $WATCH_PID || true
-
-          attic push -j 1 "$ATTIC_CACHE" "$OUT_PATH"
-          echo "::endgroup::"
-
-          echo "::group::📊 Generating Analysis"
-          SIZE_BYTES=$(nix path-info -S "$OUT_PATH" | awk '{print $2}')
-          TOTAL_SIZE=$(numfmt --to=iec-i --suffix=B "$SIZE_BYTES")
-
-          echo "### 📊 Analysis Report" >> $GITHUB_STEP_SUMMARY
-          echo "**Total System Size:** $TOTAL_SIZE" >> $GITHUB_STEP_SUMMARY
-          echo "**Store Path:** \`$OUT_PATH\`" >> $GITHUB_STEP_SUMMARY
-
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "<details><summary>📦 Top 10 Largest Packages</summary>" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Size | Package |" >> $GITHUB_STEP_SUMMARY
-          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
-
-          nix path-info -rs "$OUT_PATH" | sort -nk2 | tail -n 10 | tac | while read path size; do
-            HUMAN_SIZE=$(numfmt --to=iec-i --suffix=B "$size")
-            NAME=$(basename "$path" | cut -d- -f2-)
-            echo "| $HUMAN_SIZE | $NAME |" >> $GITHUB_STEP_SUMMARY
-          done
-
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "</details>" >> $GITHUB_STEP_SUMMARY
-          echo "::endgroup::"
 
   build-packages:
     needs: generate-matrix
@@ -165,85 +79,44 @@ jobs:
           attic-endpoint: ${{ secrets.ATTIC_ENDPOINT }}
           attic-cache: ${{ secrets.ATTIC_CACHE }}
           attic-token: ${{ secrets.ATTIC_TOKEN }}
-          maximize-space: "false"
           tmate-debug: ${{ inputs.debug_enabled }}
           tmate-detached: ${{ inputs.debug_detached }}
 
-      - name: Check Cache & Build Package
-        env:
-          ATTIC_ENDPOINT: ${{ secrets.ATTIC_ENDPOINT }}
-          ATTIC_CACHE: ${{ secrets.ATTIC_CACHE }}
-          ATTIC_TOKEN: ${{ secrets.ATTIC_TOKEN }}
-          PKG: ${{ matrix.package }}
-        run: |
-          echo "::group::🔍 Calculating Output Path"
-          EVAL_ATTR=".#packages.x86_64-linux.$PKG.outPath"
-          BUILD_ATTR=".#packages.x86_64-linux.$PKG"
+      - name: Build Package ${{ matrix.package }}
+        uses: ./.github/actions/build-push-attic
+        with:
+          name: ${{ matrix.package }}
+          nix-attr: .#packages.x86_64-linux.${{ matrix.package }}
+          attic-endpoint: ${{ secrets.ATTIC_ENDPOINT }}
+          attic-cache: ${{ secrets.ATTIC_CACHE }}
+          attic-token: ${{ secrets.ATTIC_TOKEN }}
 
-          OUT_PATH=$(nix eval --raw "$EVAL_ATTR" --override-input nix-secrets ./nix-secrets-dummy)
-          STORE_HASH=$(echo "$OUT_PATH" | awk -F/ '{print $4}' | awk -F- '{print $1}')
+  build-hosts:
+    needs: [generate-matrix, build-packages]
+    if: ${{ needs.generate-matrix.outputs.hosts != '[]' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        host: ${{ fromJson(needs.generate-matrix.outputs.hosts) }}
+    steps:
+      - uses: actions/checkout@v6
 
-          echo "Store Path: $OUT_PATH"
-          echo "Hash: $STORE_HASH"
-          echo "::endgroup::"
+      - name: Setup Nix Environment
+        uses: ./.github/actions/setup-nix
+        with:
+          attic-endpoint: ${{ secrets.ATTIC_ENDPOINT }}
+          attic-cache: ${{ secrets.ATTIC_CACHE }}
+          attic-token: ${{ secrets.ATTIC_TOKEN }}
+          maximize-space: "true"
+          tmate-debug: ${{ inputs.debug_enabled }}
+          tmate-detached: ${{ inputs.debug_detached }}
 
-          echo "::group::📡 Checking Attic Cache"
-          CACHE_URL="${ATTIC_ENDPOINT%/}/$ATTIC_CACHE/$STORE_HASH.narinfo"
-
-          if curl --output /dev/null --silent --head --fail \
-              -H "Authorization: Bearer $ATTIC_TOKEN" \
-              "$CACHE_URL"; then
-
-            echo "✅ Cache HIT: Path exists."
-            echo "Skipping build."
-
-            NARINFO=$(curl -s -H "Authorization: Bearer $ATTIC_TOKEN" "$CACHE_URL")
-            NAR_SIZE=$(echo "$NARINFO" | grep "^NarSize:" | awk '{print $2}')
-            HUMAN_SIZE=$(numfmt --to=iec-i --suffix=B "$NAR_SIZE")
-
-            echo "### ✅ $PKG: Cached" >> $GITHUB_STEP_SUMMARY
-            echo "**Nar Size:** $HUMAN_SIZE (Toplevel only)" >> $GITHUB_STEP_SUMMARY
-            echo "**Path:** \`$OUT_PATH\`" >> $GITHUB_STEP_SUMMARY
-            echo "::endgroup::"
-            exit 0
-          else
-            echo "⚠️ Cache MISS: Path not found."
-            echo "### 🔨 $PKG: Building" >> $GITHUB_STEP_SUMMARY
-          fi
-          echo "::endgroup::"
-
-          echo "::group::🔨 Building & Pushing"
-          attic watch-store -j 1 "$ATTIC_CACHE" &
-          WATCH_PID=$!
-
-          nix build -L "$BUILD_ATTR" --override-input nix-secrets ./nix-secrets-dummy
-
-          kill $WATCH_PID || true
-          wait $WATCH_PID || true
-
-          attic push -j 1 "$ATTIC_CACHE" "$OUT_PATH"
-          echo "::endgroup::"
-
-          echo "::group::📊 Generating Analysis"
-          SIZE_BYTES=$(nix path-info -S "$OUT_PATH" | awk '{print $2}')
-          TOTAL_SIZE=$(numfmt --to=iec-i --suffix=B "$SIZE_BYTES")
-
-          echo "### 📊 Analysis Report" >> $GITHUB_STEP_SUMMARY
-          echo "**Closure Size:** $TOTAL_SIZE" >> $GITHUB_STEP_SUMMARY
-          echo "**Store Path:** \`$OUT_PATH\`" >> $GITHUB_STEP_SUMMARY
-
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "<details><summary>📦 Top 10 Largest Dependencies</summary>" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Size | Package |" >> $GITHUB_STEP_SUMMARY
-          echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
-
-          nix path-info -rs "$OUT_PATH" | sort -nk2 | tail -n 10 | tac | while read path size; do
-            HUMAN_SIZE=$(numfmt --to=iec-i --suffix=B "$size")
-            NAME=$(basename "$path" | cut -d- -f2-)
-            echo "| $HUMAN_SIZE | $NAME |" >> $GITHUB_STEP_SUMMARY
-          done
-
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "</details>" >> $GITHUB_STEP_SUMMARY
-          echo "::endgroup::"
+      - name: Build System ${{ matrix.host }}
+        uses: ./.github/actions/build-push-attic
+        with:
+          name: ${{ matrix.host }}
+          nix-attr: .#nixosConfigurations.${{ matrix.host }}.config.system.build.toplevel
+          attic-endpoint: ${{ secrets.ATTIC_ENDPOINT }}
+          attic-cache: ${{ secrets.ATTIC_CACHE }}
+          attic-token: ${{ secrets.ATTIC_TOKEN }}
