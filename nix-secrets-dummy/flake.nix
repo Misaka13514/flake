@@ -10,10 +10,10 @@
       homeDomain = "example.org";
       telegramApiId = null;
       telegramApiHash = null;
-      homuraIpv4Address = null;
-      homuraIpv4Gateway = null;
-      homuraIpv6Address = null;
-      homuraIpv6Gateway = null;
+      homuraIpv4Address = "127.0.0.2";
+      homuraIpv4Gateway = "127.0.0.1";
+      homuraIpv6Address = "::2";
+      homuraIpv6Gateway = "::1";
       homuraDomain = "example.org";
       homuraDomainCdn = "cdn.example.org";
       homuraDomainHack = "hack.example.org";
