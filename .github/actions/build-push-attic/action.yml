@@ -1,5 +1,5 @@
 name: "Build and Push to Attic"
-description: "Builds a Nix attribute, checks Attic/Upstream cache, and pushes results."
+description: "Builds a Nix attribute and pushes results to Attic."
 
 inputs:
   name:
@@ -21,7 +21,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Check Cache & Build
+    - name: Build and Push
       shell: bash
       env:
         ATTIC_ENDPOINT: ${{ inputs.attic-endpoint }}
@@ -30,70 +30,12 @@ runs:
         TARGET_NAME: ${{ inputs.name }}
         BUILD_ATTR: ${{ inputs.nix-attr }}
       run: |
-        echo "::group::🔍 Calculating Output Path for $TARGET_NAME"
+        echo "::group::🔨 Building & Pushing $TARGET_NAME"
 
-        EVAL_ATTR="${BUILD_ATTR}.outPath"
-
-        OUT_PATH=$(nix eval --raw "$EVAL_ATTR" --override-input nix-secrets ./nix-secrets-dummy)
-        STORE_HASH=$(echo "$OUT_PATH" | awk -F/ '{print $4}' | awk -F- '{print $1}')
-
-        echo "Store Path: $OUT_PATH"
-        echo "Hash: $STORE_HASH"
-        echo "::endgroup::"
-
-        echo "::group::📡 Checking Caches"
-        ATTIC_URL="${ATTIC_ENDPOINT%/}/$ATTIC_CACHE/$STORE_HASH.narinfo"
-
-        UPSTREAM_CACHES=(
-          "https://cache.nixos.org"
-          "https://nix-community.cachix.org"
-          "https://cache.nixos-cuda.org"
-        )
-
-        write_summary() {
-          local icon=$1
-          local source=$2
-          local size="Unknown"
-
-          if [ ! -z "$3" ]; then
-            local meta=$(curl -s -H "Authorization: Bearer $ATTIC_TOKEN" "$3")
-            local bsize=$(echo "$meta" | grep "^NarSize:" | awk '{print $2}')
-            if [ ! -z "$bsize" ]; then size=$(numfmt --to=iec-i --suffix=B "$bsize"); fi
-          fi
-
-          echo "### $icon $TARGET_NAME: $source" >> $GITHUB_STEP_SUMMARY
-          echo "**Path:** \`$OUT_PATH\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Size:** $size" >> $GITHUB_STEP_SUMMARY
-        }
-
-        if curl --output /dev/null --silent --head --fail \
-            -H "Authorization: Bearer $ATTIC_TOKEN" "$ATTIC_URL"; then
-          echo "✅ Cache HIT: Attic"
-          write_summary "✅" "Cached (Attic)" "$ATTIC_URL"
-          echo "::endgroup::"
-          exit 0
-        fi
-
-        for CACHE in "${UPSTREAM_CACHES[@]}"; do
-          CACHE_URL="$CACHE/$STORE_HASH.narinfo"
-          CACHE_NAME=$(echo "$CACHE" | awk -F/ '{print $3}')
-          if curl --output /dev/null --silent --head --fail -m 5 "$CACHE_URL"; then
-            echo "✅ Cache HIT: $CACHE_NAME"
-            write_summary "☁️" "Cached ($CACHE_NAME)" "$CACHE_URL"
-            echo "::endgroup::"
-            exit 0
-          fi
-        done
-
-        echo "⚠️ Cache MISS. Building..."
-        echo "### 🔨 $TARGET_NAME: Building" >> $GITHUB_STEP_SUMMARY
-        echo "::endgroup::"
-
-        echo "::group::🔨 Building & Pushing"
         attic watch-store -j 1 "$ATTIC_CACHE" &
         WATCH_PID=$!
 
-        nix build -L "$BUILD_ATTR" --override-input nix-secrets ./nix-secrets-dummy
+        OUT_PATH=$(nix build -L --print-out-paths "$BUILD_ATTR" --override-input nix-secrets ./nix-secrets-dummy)
 
         kill $WATCH_PID || true
         wait $WATCH_PID || true
@@ -102,9 +44,12 @@ runs:
         echo "::endgroup::"
 
         echo "::group::📊 Generating Analysis"
+        echo "### ✅ Build Success: $TARGET_NAME" >> $GITHUB_STEP_SUMMARY
+        echo "**Path:** \`$OUT_PATH\`" >> $GITHUB_STEP_SUMMARY
+
         SIZE_BYTES=$(nix path-info -S "$OUT_PATH" | awk '{print $2}')
         TOTAL_SIZE=$(numfmt --to=iec-i --suffix=B "$SIZE_BYTES")
-        echo "- **Closure Size:** $TOTAL_SIZE" >> $GITHUB_STEP_SUMMARY
+        echo "**Closure Size:** $TOTAL_SIZE" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "<details><summary>📦 Top 10 Largest Dependencies</summary>" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY

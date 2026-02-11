@@ -150,6 +150,13 @@
       overlays = {
         flake-packages = import ./overlays/flake-packages.nix self;
       };
+
+      debug = {
+        matrix = {
+          hosts = lib.mapAttrs (n: v: v.config.system.build.toplevel.outPath) self.nixosConfigurations;
+          packages = lib.mapAttrs (n: v: v.outPath) (self.packages.x86_64-linux or { });
+        };
+      };
     }
     // flake-utils.lib.eachDefaultSystem (
       system:

@@ -23,22 +23,7 @@ permissions:
   id-token: write
 
 jobs:
-  check-flake:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - name: Setup Nix Environment
-        uses: ./.github/actions/setup-nix
-        with:
-          tmate-debug: ${{ inputs.debug_enabled }}
-          tmate-detached: ${{ inputs.debug_detached }}
-
-      - name: Run Flake Check
-        run: |
-          nix flake check -L --keep-going --override-input nix-secrets ./nix-secrets-dummy
-
   generate-matrix:
-    needs: check-flake
     runs-on: ubuntu-latest
     outputs:
       hosts: ${{ steps.set-matrix.outputs.hosts }}
@@ -49,18 +34,79 @@ jobs:
       - name: Setup Nix Environment
         uses: ./.github/actions/setup-nix
         with:
-          use-magic-cache: "false"
+          attic-endpoint: ${{ secrets.ATTIC_ENDPOINT }}
+          attic-cache: ${{ secrets.ATTIC_CACHE }}
+          attic-token: ${{ secrets.ATTIC_TOKEN }}
           tmate-debug: ${{ inputs.debug_enabled }}
           tmate-detached: ${{ inputs.debug_detached }}
 
-      - name: Generate Build Matrix
-        id: set-matrix
+      - name: Run Flake Check
         run: |
-          JSON=$(nix flake show --json --override-input nix-secrets ./nix-secrets-dummy)
-          HOSTS=$(echo "$JSON" | jq -c '.nixosConfigurations | keys')
-          PACKAGES=$(echo "$JSON" | jq -c '.packages."x86_64-linux" // {} | keys')
-          echo "hosts=$HOSTS" >> $GITHUB_OUTPUT
-          echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
+          nix flake check -L --keep-going --override-input nix-secrets ./nix-secrets-dummy
+
+      - name: Check Cache & Generate Matrix
+        id: set-matrix
+        env:
+          ATTIC_ENDPOINT: ${{ secrets.ATTIC_ENDPOINT }}
+          ATTIC_CACHE: ${{ secrets.ATTIC_CACHE }}
+          ATTIC_TOKEN: ${{ secrets.ATTIC_TOKEN }}
+        run: |
+          echo "::group::🔍 Evaluating Flake Targets"
+          JSON=$(nix eval --json --override-input nix-secrets ./nix-secrets-dummy .#debug.matrix)
+          echo "Evaluated JSON:"
+          echo "$JSON" | jq .
+          echo "::endgroup::"
+
+          UPSTREAMS=(
+            "https://cache.nixos.org"
+            "https://nix-community.cachix.org"
+            "https://cache.nixos-cuda.org"
+          )
+
+          check_hit() {
+            local path=$1
+            local hash=$(echo "$path" | awk -F/ '{print $4}' | awk -F- '{print $1}')
+
+            if curl --output /dev/null --silent --head --fail -H "Authorization: Bearer $ATTIC_TOKEN" "${ATTIC_ENDPOINT%/}/$ATTIC_CACHE/$hash.narinfo"; then
+              return 0
+            fi
+
+            for cache in "${UPSTREAMS[@]}"; do
+              if curl --output /dev/null --silent --head --fail "$cache/$hash.narinfo"; then
+                return 0
+              fi
+            done
+            return 1
+          }
+
+          echo "::group::📡 Checking Caches"
+
+          BUILD_HOSTS="[]"
+          while read -r name path; do
+            echo -n "Host $name: "
+            if check_hit "$path"; then
+              echo "✅ Cached ($path)"
+            else
+              echo "🔨 Needs Build"
+              BUILD_HOSTS=$(echo "$BUILD_HOSTS" | jq -c ". + [\"$name\"]")
+            fi
+          done < <(echo "$JSON" | jq -r '.hosts | to_entries[] | "\(.key) \(.value)"')
+
+          BUILD_PACKAGES="[]"
+          while read -r name path; do
+            echo -n "Package $name: "
+            if check_hit "$path"; then
+              echo "✅ Cached ($path)"
+            else
+              echo "🔨 Needs Build"
+              BUILD_PACKAGES=$(echo "$BUILD_PACKAGES" | jq -c ". + [\"$name\"]")
+            fi
+          done < <(echo "$JSON" | jq -r '.packages | to_entries[] | "\(.key) \(.value)"')
+
+          echo "::endgroup::"
+
+          echo "hosts=$BUILD_HOSTS" >> $GITHUB_OUTPUT
+          echo "packages=$BUILD_PACKAGES" >> $GITHUB_OUTPUT
 
   build-packages:
     needs: generate-matrix
