@@ -53,8 +53,6 @@ jobs:
         run: |
           echo "::group::🔍 Evaluating Flake Targets"
           JSON=$(nix eval --json --override-input nix-secrets ./nix-secrets-dummy .#debug.matrix)
-          echo "Evaluated JSON:"
-          echo "$JSON" | jq .
           echo "::endgroup::"
 
           UPSTREAMS=(
@@ -63,45 +61,66 @@ jobs:
             "https://cache.nixos-cuda.org"
           )
 
-          check_hit() {
+          check_cache_source() {
             local path=$1
             local hash=$(echo "$path" | awk -F/ '{print $4}' | awk -F- '{print $1}')
 
-            if curl --output /dev/null --silent --head --fail -H "Authorization: Bearer $ATTIC_TOKEN" "${ATTIC_ENDPOINT%/}/$ATTIC_CACHE/$hash.narinfo"; then
+            local attic_url="${ATTIC_ENDPOINT%/}/$ATTIC_CACHE"
+            if curl --output /dev/null --silent --head --fail -H "Authorization: Bearer $ATTIC_TOKEN" "$attic_url/$hash.narinfo"; then
+              echo "Attic Private"
               return 0
             fi
 
             for cache in "${UPSTREAMS[@]}"; do
+              if [[ "$cache" == *"$ATTIC_CACHE"* ]]; then continue; fi
               if curl --output /dev/null --silent --head --fail "$cache/$hash.narinfo"; then
+                echo "$cache"
                 return 0
               fi
             done
             return 1
           }
 
-          echo "::group::📡 Checking Caches"
+          {
+            echo "### 📡 Cache Hit Analysis"
+            echo "| Type | Name | Status | Source |"
+            echo "| :--- | :--- | :--- | :--- |"
+          } >> $GITHUB_STEP_SUMMARY
 
           BUILD_HOSTS="[]"
-          while read -r name path; do
-            echo -n "Host $name: "
-            if check_hit "$path"; then
-              echo "✅ Cached ($path)"
-            else
-              echo "🔨 Needs Build"
-              BUILD_HOSTS=$(echo "$BUILD_HOSTS" | jq -c ". + [\"$name\"]")
-            fi
-          done < <(echo "$JSON" | jq -r '.hosts | to_entries[] | "\(.key) \(.value)"')
-
           BUILD_PACKAGES="[]"
-          while read -r name path; do
-            echo -n "Package $name: "
-            if check_hit "$path"; then
-              echo "✅ Cached ($path)"
+
+          echo "::group::📡 Checking Caches"
+
+          process_target() {
+            local type=$1
+            local name=$2
+            local path=$3
+
+            echo -n "Checking $type: $name ... "
+
+            if source_url=$(check_cache_source "$path"); then
+              echo "✅ Cached ($source_url)"
+              echo "| $type | **$name** | ✅ Cached | \`$source_url\` |" >> $GITHUB_STEP_SUMMARY
             else
               echo "🔨 Needs Build"
-              BUILD_PACKAGES=$(echo "$BUILD_PACKAGES" | jq -c ". + [\"$name\"]")
+              echo "| $type | **$name** | 🔨 **Build** | - |" >> $GITHUB_STEP_SUMMARY
+
+              if [[ "$type" == "Host" ]]; then
+                BUILD_HOSTS=$(echo "$BUILD_HOSTS" | jq -c ". + [\"$name\"]")
+              else
+                BUILD_PACKAGES=$(echo "$BUILD_PACKAGES" | jq -c ". + [\"$name\"]")
+              fi
             fi
+          }
+
+          while read -r name path; do
+            process_target "Package" "$name" "$path"
           done < <(echo "$JSON" | jq -r '.packages | to_entries[] | "\(.key) \(.value)"')
+
+          while read -r name path; do
+            process_target "Host" "$name" "$path"
+          done < <(echo "$JSON" | jq -r '.hosts | to_entries[] | "\(.key) \(.value)"')
 
           echo "::endgroup::"
 

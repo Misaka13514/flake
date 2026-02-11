@@ -30,37 +30,40 @@ runs:
         TARGET_NAME: ${{ inputs.name }}
         BUILD_ATTR: ${{ inputs.nix-attr }}
       run: |
-        echo "::group::🔨 Building & Pushing $TARGET_NAME"
-
-        attic watch-store -j 1 "$ATTIC_CACHE" &
-        WATCH_PID=$!
-
+        echo "::group::🔨 Building $TARGET_NAME"
         OUT_PATH=$(nix build -L --print-out-paths "$BUILD_ATTR" --override-input nix-secrets ./nix-secrets-dummy)
+        echo "::endgroup::"
 
-        kill $WATCH_PID || true
-        wait $WATCH_PID || true
-
+        echo "::group::🚀 Pushing to Attic"
         attic push -j 1 "$ATTIC_CACHE" "$OUT_PATH"
         echo "::endgroup::"
 
         echo "::group::📊 Generating Analysis"
-        echo "### ✅ Build Success: $TARGET_NAME" >> $GITHUB_STEP_SUMMARY
-        echo "**Path:** \`$OUT_PATH\`" >> $GITHUB_STEP_SUMMARY
+        {
+          echo "### ✅ Build Success: $TARGET_NAME"
+          echo "**Path:** \`$OUT_PATH\`"
+        } >> $GITHUB_STEP_SUMMARY
 
-        SIZE_BYTES=$(nix path-info -S "$OUT_PATH" | awk '{print $2}')
-        TOTAL_SIZE=$(numfmt --to=iec-i --suffix=B "$SIZE_BYTES")
-        echo "**Closure Size:** $TOTAL_SIZE" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "<details><summary>📦 Top 10 Largest Dependencies</summary>" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "| Size | Package |" >> $GITHUB_STEP_SUMMARY
-        echo "| :--- | :--- |" >> $GITHUB_STEP_SUMMARY
+        if SIZE_BYTES=$(nix path-info -S "$OUT_PATH" 2>/dev/null | awk '{print $2}'); then
+          TOTAL_SIZE=$(numfmt --to=iec-i --suffix=B "$SIZE_BYTES")
+          echo "**Closure Size:** $TOTAL_SIZE" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "**Closure Size:** Unknown" >> $GITHUB_STEP_SUMMARY
+        fi
 
-        nix path-info -rs "$OUT_PATH" | sort -nk2 | tail -n 10 | tac | while read path size; do
+        {
+          echo ""
+          echo "<details><summary>📦 Top 10 Largest Dependencies</summary>"
+          echo ""
+          echo "| Size | Package |"
+          echo "| :--- | :--- |"
+        } >> $GITHUB_STEP_SUMMARY
+
+        nix path-info -rs "$OUT_PATH" 2>/dev/null | sort -nk2 | tail -n 10 | tac | while read path size; do
           HUMAN_SIZE=$(numfmt --to=iec-i --suffix=B "$size")
           NAME=$(basename "$path" | cut -d- -f2-)
           echo "| $HUMAN_SIZE | $NAME |" >> $GITHUB_STEP_SUMMARY
-        done
+        done || true
 
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "</details>" >> $GITHUB_STEP_SUMMARY
