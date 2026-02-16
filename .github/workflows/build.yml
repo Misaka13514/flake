@@ -159,7 +159,7 @@ jobs:
 
   build-hosts:
     needs: [generate-matrix, build-packages]
-    if: needs.generate-matrix.outputs.hosts != '[]' && (needs.build-packages.result == 'success' || needs.build-packages.result == 'skipped')
+    if: always() && !cancelled() && needs.generate-matrix.result == 'success' && needs.generate-matrix.outputs.hosts != '[]' && (needs.build-packages.result == 'success' || needs.build-packages.result == 'skipped')
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
