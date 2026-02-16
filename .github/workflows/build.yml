@@ -129,10 +129,11 @@ jobs:
 
   build-packages:
     needs: generate-matrix
-    if: ${{ needs.generate-matrix.outputs.packages != '[]' }}
+    if: needs.generate-matrix.outputs.packages != '[]'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix:
         package: ${{ fromJson(needs.generate-matrix.outputs.packages) }}
     steps:
@@ -158,10 +159,11 @@ jobs:
 
   build-hosts:
     needs: [generate-matrix, build-packages]
-    if: ${{ needs.generate-matrix.outputs.hosts != '[]' }}
+    if: needs.generate-matrix.outputs.hosts != '[]' && (needs.build-packages.result == 'success' || needs.build-packages.result == 'skipped')
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix:
         host: ${{ fromJson(needs.generate-matrix.outputs.hosts) }}
     steps:

@@ -4,6 +4,7 @@
   lib,
   overlays,
   system,
+  secretsPath,
   ...
 }:
 {
@@ -12,6 +13,11 @@
       nh
       nix-output-monitor
     ];
+
+    sops.secrets."netrc-file" = {
+      format = "yaml";
+      sopsFile = "${secretsPath}/nix.yaml";
+    };
 
     nix = {
       channel.enable = false;
@@ -49,6 +55,10 @@
         dates = "weekly";
         options = "--delete-older-than 7d";
       };
+
+      extraOptions = ''
+        netrc-file = ${config.sops.secrets."netrc-file".path}
+      '';
     };
 
     nixpkgs = {

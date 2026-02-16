@@ -8,6 +8,10 @@
   imports = with nixosModules; [
     roles.desktop
     gui.suites.plasma
+    services.docker
+    services.mdns
+    services.printing
+    services.tailscale
     hardware.bluetooth
     users.atri
   ];
