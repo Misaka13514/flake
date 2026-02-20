@@ -27,6 +27,7 @@ in
   sops.secrets."acme-deploy-key" = {
     format = "yaml";
     sopsFile = "${secretsPath}/home-acme-deploy.yaml";
+    owner = "acme";
   };
 
   sops.secrets."cloudflare-api-token" = {
