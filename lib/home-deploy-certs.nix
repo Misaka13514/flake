@@ -15,7 +15,13 @@ let
   sshOpts = "-i ${sshKeyPath} -o ConnectTimeout=10 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null";
 in
 pkgs.writeShellScriptBin "deploy-certs" ''
-  export PATH=$PATH:${lib.makeBinPath [ pkgs.openssh ]}
+  export PATH=$PATH:${
+    lib.makeBinPath [
+      pkgs.openssh
+      pkgs.bash
+      pkgs.coreutils
+    ]
+  }
 
   if [ ! -f "${sshKeyPath}" ]; then
     echo "Error: SSH Key not found at ${sshKeyPath}"
