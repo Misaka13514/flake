@@ -103,6 +103,7 @@
             unstableHosts = [
               "Index"
               "arona"
+              "midori"
               "nixos"
             ];
             nixpkgs = if builtins.elem hostname unstableHosts then nixpkgs-unstable else nixpkgs-2511;
