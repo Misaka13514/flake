@@ -31,6 +31,7 @@ in
         "wheel"
         "video"
         "docker"
+        "podman"
         "networkmanager"
         "input"
         "wireshark"
