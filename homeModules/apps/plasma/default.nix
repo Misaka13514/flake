@@ -3,9 +3,13 @@
   assetsPath,
   secretsPath,
   config,
+  osConfig,
+  lib,
   ...
 }:
 let
+  isQemuVm = osConfig.services.qemuGuest.enable or false;
+  suspendAction = if isQemuVm then "nothing" else "sleep";
   username = "atri";
   wallpaper =
     if hostname == "Index" then
@@ -50,24 +54,24 @@ in
         dimDisplay.enable = true;
         dimDisplay.idleTimeout = 600;
         turnOffDisplay.idleTimeout = 900;
-        autoSuspend.action = "sleep";
-        autoSuspend.idleTimeout = 1200;
+        autoSuspend.action = suspendAction;
+        autoSuspend.idleTimeout = lib.mkIf (suspendAction != "nothing") 1200;
         powerProfile = "performance";
       };
       battery = {
         dimDisplay.enable = true;
         dimDisplay.idleTimeout = 120;
         turnOffDisplay.idleTimeout = 300;
-        autoSuspend.action = "sleep";
-        autoSuspend.idleTimeout = 600;
+        autoSuspend.action = suspendAction;
+        autoSuspend.idleTimeout = lib.mkIf (suspendAction != "nothing") 600;
         powerProfile = "balanced";
       };
       lowBattery = {
         dimDisplay.enable = true;
         dimDisplay.idleTimeout = 60;
         turnOffDisplay.idleTimeout = 120;
-        autoSuspend.action = "sleep";
-        autoSuspend.idleTimeout = 300;
+        autoSuspend.action = suspendAction;
+        autoSuspend.idleTimeout = lib.mkIf (suspendAction != "nothing") 300;
         powerProfile = "powerSaving";
       };
     };
