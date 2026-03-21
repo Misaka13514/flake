@@ -1,4 +1,9 @@
-{ pkgs, ... }:
+{
+  pkgs,
+  config,
+  secretsPath,
+  ...
+}:
 let
   extraPackages = with pkgs; [
     any-nix-shell
@@ -147,5 +152,31 @@ in
         auto_update = true;
       };
     };
+  };
+
+  programs.atuin = {
+    enable = true;
+    daemon.enable = true;
+    flags = [
+      "--disable-up-arrow"
+    ];
+    settings = {
+      auto_sync = true;
+      update_check = false;
+      style = "compact";
+      prefers_reduced_motion = true;
+      sync.records = true;
+    };
+  };
+
+  sops.secrets."atuin-key" = {
+    format = "yaml";
+    sopsFile = "${secretsPath}/atuin.yaml";
+    mode = "0400";
+    path = "${config.home.homeDirectory}/.local/share/atuin/key";
+  };
+
+  programs.zellij = {
+    enable = true;
   };
 }

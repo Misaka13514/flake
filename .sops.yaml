@@ -36,6 +36,12 @@ creation_rules:
           - *host_midori
           - *host_Index
           - *host_arona
+  - path_regex: secrets/atuin.yaml$
+    key_groups:
+      - pgp:
+          - *admin_atri
+        age:
+          - *home_atri
   - path_regex: secrets/cloudflare.yaml$
     key_groups:
       - pgp:

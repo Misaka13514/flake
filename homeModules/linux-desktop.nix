@@ -11,6 +11,7 @@ in
   imports = [
     ./apps/ayugram-desktop
     ./apps/chromium
+    ./apps/ghostty
     ./apps/mitmproxy
     ./apps/vscode
   ]
