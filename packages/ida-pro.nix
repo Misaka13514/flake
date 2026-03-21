@@ -19,8 +19,20 @@
   openssl,
   python3,
   stdenv,
-  xorg,
   zlib,
+  libice,
+  libsm,
+  libx11,
+  libxau,
+  libxcb,
+  libxext,
+  libxi,
+  libxrender,
+  libxcb-cursor,
+  libxcb-image,
+  libxcb-keysyms,
+  libxcb-render-util,
+  libxcb-wm,
 }:
 stdenv.mkDerivation (finalAttrs: rec {
   pname = "ida-pro";
@@ -29,7 +41,7 @@ stdenv.mkDerivation (finalAttrs: rec {
   # https://auth.lol/ida
   src = fetchtorrent {
     name = "ida-pro-src";
-    url = "https://hexrays.su/ida92/ida92.torrent";
+    url = "magnet:?xt=urn:btih:ce86306a417dd64fab8d26a4983a58412008aa9e&dn=ida92&tr=http%3A%2F%2Ftracker.mywaifu.best%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.qu.ax%3A6969%2Fannounce&tr=http%3A%2F%2Ftracker.renfei.net%3A8080%2Fannounce&tr=https%3A%2F%2Ftracker.bjut.jp%3A443%2Fannounce&tr=http%3A%2F%2Ffleira.no%3A6969%2Fannounce";
     hash = "sha256-KvAmdzgBMlxeYKhjAQSGI2FwhMF2C5BcJvVz0bk6Ito=";
   };
 
@@ -64,19 +76,19 @@ stdenv.mkDerivation (finalAttrs: rec {
     libxkbcommon
     openssl
     stdenv.cc.cc
-    xorg.libICE
-    xorg.libSM
-    xorg.libX11
-    xorg.libXau
-    xorg.libxcb
-    xorg.libXext
-    xorg.libXi
-    xorg.libXrender
-    xorg.xcbutilimage
-    xorg.xcbutilkeysyms
-    xorg.xcbutilrenderutil
-    xorg.xcbutilwm
-    xorg.xcbutilcursor
+    libice
+    libsm
+    libx11
+    libxau
+    libxcb
+    libxext
+    libxi
+    libxrender
+    libxcb-image
+    libxcb-keysyms
+    libxcb-render-util
+    libxcb-wm
+    libxcb-cursor
     zlib
   ];
   buildInputs = runtimeDependencies;
