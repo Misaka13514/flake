@@ -6,43 +6,37 @@ on:
       - main
   pull_request:
   workflow_dispatch:
-    inputs:
-      debug_enabled:
-        type: boolean
-        description: "Run the build with tmate debugging enabled"
-        required: false
-        default: false
-      debug_detached:
-        type: boolean
-        description: "Run the build with tmate debugging enabled in detached mode"
-        required: false
-        default: true
 
 permissions:
   contents: read
   id-token: write
 
+env:
+  BUILDER_COUNTS: '{"ubuntu-24.04": 3}'
+
 jobs:
-  generate-matrix:
-    runs-on: ubuntu-latest
+  config:
+    name: Evaluate Targets
+    runs-on: ubuntu-24.04
     outputs:
       hosts: ${{ steps.set-matrix.outputs.hosts }}
       packages: ${{ steps.set-matrix.outputs.packages }}
+      has_builds: ${{ steps.set-matrix.outputs.has_builds }}
+      builder_matrix: ${{ steps.set-builders.outputs.builder_matrix }}
+      builders_list: ${{ steps.set-builders.outputs.builders_list }}
+      run_suffix: ${{ steps.set-builders.outputs.run_suffix }}
     steps:
       - uses: actions/checkout@v6
 
-      - name: Setup Nix Environment
-        uses: ./.github/actions/setup-nix
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
         with:
-          attic-endpoint: ${{ secrets.ATTIC_ENDPOINT }}
-          attic-cache: ${{ secrets.ATTIC_CACHE }}
-          attic-token: ${{ secrets.ATTIC_TOKEN }}
-          tmate-debug: ${{ inputs.debug_enabled }}
-          tmate-detached: ${{ inputs.debug_detached }}
+          extra_nix_config: |
+            trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs= cache.nixos-cuda.org:74DUi4Ye579gUqzH4ziL9IyiJBlDpMRn9MBN8oNan9M=
+            extra-substituters = https://nix-community.cachix.org https://cache.nixos-cuda.org
 
       - name: Run Flake Check
-        run: |
-          nix flake check -L --keep-going --override-input nix-secrets ./nix-secrets-dummy
+        run: nix flake check -L --keep-going --override-input nix-secrets ./nix-secrets-dummy
 
       - name: Check Cache & Generate Matrix
         id: set-matrix
@@ -127,62 +121,130 @@ jobs:
           echo "hosts=$BUILD_HOSTS" >> $GITHUB_OUTPUT
           echo "packages=$BUILD_PACKAGES" >> $GITHUB_OUTPUT
 
-  build-packages:
-    needs: generate-matrix
-    if: needs.generate-matrix.outputs.packages != '[]'
-    runs-on: ubuntu-latest
+          if [ "$BUILD_HOSTS" == "[]" ] && [ "$BUILD_PACKAGES" == "[]" ]; then
+            echo "has_builds=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_builds=true" >> $GITHUB_OUTPUT
+          fi
+
+      - id: set-builders
+        if: steps.set-matrix.outputs.has_builds == 'true'
+        name: Generate Builder Matrix
+        run: |
+          SUFFIX=$(openssl rand -hex 3)
+          echo "run_suffix=$SUFFIX" >> "$GITHUB_OUTPUT"
+
+          MATRIX_JSON=$(echo '${{ env.BUILDER_COUNTS }}' | jq -c '[
+              to_entries[] | .key as $os | .value as $count |
+              range(1; $count + 1) | { os: $os, id: "\($os)-\(.)" }
+            ]
+          ')
+          echo "builder_matrix=$MATRIX_JSON" >> "$GITHUB_OUTPUT"
+
+          BUILDERS_LIST=$(echo "$MATRIX_JSON" | jq -r --arg suffix "$SUFFIX" 'map("nix-builder-\($suffix)-\(.id)") | join(" ")')
+          echo "builders_list=$BUILDERS_LIST" >> "$GITHUB_OUTPUT"
+
+  builder:
+    needs: config
+    if: needs.config.outputs.has_builds == 'true'
+    name: Builder ${{ matrix.builder.id }}
+    runs-on: ${{ matrix.builder.os }}
     strategy:
       fail-fast: false
-      max-parallel: 1
       matrix:
-        package: ${{ fromJson(needs.generate-matrix.outputs.packages) }}
+        builder: ${{ fromJSON(needs.config.outputs.builder_matrix) }}
+    steps:
+      - name: Setup Distributed Nix Builder
+        uses: Misaka13514/setup-distributed-nix-builds@main
+        with:
+          tailscale_authkey: ${{ secrets.TS_OAUTH_SECRET }}
+          tailscale_hostname: nix-builder-${{ needs.config.outputs.run_suffix }}-${{ matrix.builder.id }}
+          tailscale_tags: tag:nix-ci-builder
+          role: builder
+          extra_nix_config: |
+            trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs= cache.nixos-cuda.org:74DUi4Ye579gUqzH4ziL9IyiJBlDpMRn9MBN8oNan9M=
+            extra-substituters = https://nix-community.cachix.org https://cache.nixos-cuda.org
+
+  coordinator:
+    needs: config
+    if: needs.config.outputs.has_builds == 'true'
+    name: Coordinator Build Job
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
 
-      - name: Setup Nix Environment
-        uses: ./.github/actions/setup-nix
+      - name: Setup Coordinator & Connect Builders
+        uses: Misaka13514/setup-distributed-nix-builds@main
         with:
-          attic-endpoint: ${{ secrets.ATTIC_ENDPOINT }}
-          attic-cache: ${{ secrets.ATTIC_CACHE }}
-          attic-token: ${{ secrets.ATTIC_TOKEN }}
-          tmate-debug: ${{ inputs.debug_enabled }}
-          tmate-detached: ${{ inputs.debug_detached }}
+          tailscale_authkey: ${{ secrets.TS_OAUTH_SECRET }}
+          tailscale_hostname: nix-coordinator-${{ needs.config.outputs.run_suffix }}
+          tailscale_tags: tag:nix-ci-coordinator
+          role: coordinator
+          builders: ${{ needs.config.outputs.builders_list }}
+          extra_nix_config: |
+            trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs= cache.nixos-cuda.org:74DUi4Ye579gUqzH4ziL9IyiJBlDpMRn9MBN8oNan9M=
+            extra-substituters = https://nix-community.cachix.org https://cache.nixos-cuda.org
 
-      - name: Build Package ${{ matrix.package }}
-        uses: ./.github/actions/build-push-attic
+      - name: Setup Attic Cache
+        uses: ryanccn/attic-action@v0.4.1
         with:
-          name: ${{ matrix.package }}
-          nix-attr: .#packages.x86_64-linux.${{ matrix.package }}
-          attic-endpoint: ${{ secrets.ATTIC_ENDPOINT }}
-          attic-cache: ${{ secrets.ATTIC_CACHE }}
-          attic-token: ${{ secrets.ATTIC_TOKEN }}
+          endpoint: ${{ secrets.ATTIC_ENDPOINT }}
+          cache: ${{ secrets.ATTIC_CACHE }}
+          token: ${{ secrets.ATTIC_TOKEN }}
+          skip-push: true
 
-  build-hosts:
-    needs: [generate-matrix, build-packages]
-    if: always() && !cancelled() && needs.generate-matrix.result == 'success' && needs.generate-matrix.outputs.hosts != '[]' && (needs.build-packages.result == 'success' || needs.build-packages.result == 'skipped')
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      max-parallel: 1
-      matrix:
-        host: ${{ fromJson(needs.generate-matrix.outputs.hosts) }}
-    steps:
-      - uses: actions/checkout@v6
+      - name: Distributed Build & Push to Attic
+        env:
+          ATTIC_CACHE: ${{ secrets.ATTIC_CACHE }}
+          PACKAGES: ${{ needs.config.outputs.packages }}
+          HOSTS: ${{ needs.config.outputs.hosts }}
+        run: |
+          echo "🚀 Preparing Distributed Build Targets..."
+          BUILD_ARGS=()
+          TARGET_NAMES=()
 
-      - name: Setup Nix Environment
-        uses: ./.github/actions/setup-nix
-        with:
-          attic-endpoint: ${{ secrets.ATTIC_ENDPOINT }}
-          attic-cache: ${{ secrets.ATTIC_CACHE }}
-          attic-token: ${{ secrets.ATTIC_TOKEN }}
-          tmate-debug: ${{ inputs.debug_enabled }}
-          tmate-detached: ${{ inputs.debug_detached }}
+          for pkg in $(echo "$PACKAGES" | jq -r '.[]'); do
+            BUILD_ARGS+=(".#packages.x86_64-linux.$pkg")
+            TARGET_NAMES+=("$pkg (Package)")
+          done
 
-      - name: Build System ${{ matrix.host }}
-        uses: ./.github/actions/build-push-attic
-        with:
-          name: ${{ matrix.host }}
-          nix-attr: .#nixosConfigurations.${{ matrix.host }}.config.system.build.toplevel
-          attic-endpoint: ${{ secrets.ATTIC_ENDPOINT }}
-          attic-cache: ${{ secrets.ATTIC_CACHE }}
-          attic-token: ${{ secrets.ATTIC_TOKEN }}
+          for host in $(echo "$HOSTS" | jq -r '.[]'); do
+            BUILD_ARGS+=(".#nixosConfigurations.$host.config.system.build.toplevel")
+            TARGET_NAMES+=("$host (Host)")
+          done
+
+          if [ ${#BUILD_ARGS[@]} -eq 0 ]; then
+            echo "No targets to build."
+            exit 0
+          fi
+
+          echo "::group::🔨 Compiling All Targets Across Cluster"
+          OUT_PATHS=$(nix build -L --max-jobs 0 "${BUILD_ARGS[@]}" --print-out-paths --override-input nix-secrets ./nix-secrets-dummy)
+          echo "::endgroup::"
+
+          echo "::group::🚀 Pushing Everything to Attic Cache"
+          attic push -j 1 "$ATTIC_CACHE" $OUT_PATHS
+          echo "::endgroup::"
+
+          echo "::group::📊 Generating Analysis"
+          echo "### ✅ Distributed Build Cluster Completed" >> $GITHUB_STEP_SUMMARY
+          echo "**Successfully Built Targets:**" >> $GITHUB_STEP_SUMMARY
+          for name in "${TARGET_NAMES[@]}"; do
+            echo "- \`$name\`" >> $GITHUB_STEP_SUMMARY
+          done
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "<details><summary>📦 Output Store Paths & Closure Sizes</summary>" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          for path in $OUT_PATHS; do
+            if SIZE_BYTES=$(nix path-info -S "$path" 2>/dev/null | awk '{print $2}'); then
+              TOTAL_SIZE=$(numfmt --to=iec-i --suffix=B "$SIZE_BYTES")
+              echo "- \`$path\` (**$TOTAL_SIZE**)" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- \`$path\` (Unknown Size)" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+          echo "</details>" >> $GITHUB_STEP_SUMMARY
+          echo "::endgroup::"
