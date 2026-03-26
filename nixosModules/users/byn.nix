@@ -7,7 +7,7 @@
       description = "baiyuanneko";
       shell = pkgs.fish;
       openssh.authorizedKeys.keys = [
-        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILtVrKjO4dfvI8Hi6Nn583LfTU6CKjp9Yd7UyLuy0ffx 2026-01-06"
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICqqbY3YayTNcb2Ak9dHm7NYRbJtdhNzZqFOAun6dtH+ byn@neko"
       ];
     };
     programs.fish.enable = true;
