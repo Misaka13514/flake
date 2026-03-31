@@ -3,7 +3,6 @@
   cairo,
   dbus,
   fetchtorrent,
-  fetchurl,
   fontconfig,
   freetype,
   glib,
@@ -17,7 +16,6 @@
   libxkbcommon,
   makeWrapper,
   openssl,
-  python3,
   stdenv,
   zlib,
   libice,
@@ -36,24 +34,19 @@
 }:
 stdenv.mkDerivation (finalAttrs: rec {
   pname = "ida-pro";
-  version = "9.2";
+  version = "9.3";
 
   # https://auth.lol/ida
+  # http://hexrayst6tfcqxausqtn2dlhngdcvkzux57df6ryrsxi3maupcvzn7id.onion.run
   src = fetchtorrent {
     name = "ida-pro-src";
-    url = "magnet:?xt=urn:btih:ce86306a417dd64fab8d26a4983a58412008aa9e&dn=ida92&tr=http%3A%2F%2Ftracker.mywaifu.best%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.qu.ax%3A6969%2Fannounce&tr=http%3A%2F%2Ftracker.renfei.net%3A8080%2Fannounce&tr=https%3A%2F%2Ftracker.bjut.jp%3A443%2Fannounce&tr=http%3A%2F%2Ffleira.no%3A6969%2Fannounce";
-    hash = "sha256-KvAmdzgBMlxeYKhjAQSGI2FwhMF2C5BcJvVz0bk6Ito=";
-  };
-
-  patcher = fetchurl {
-    url = "https://raw.githubusercontent.com/misaka18931/misakaPkgs/b9732443a451c81f57f75ab295dfb5cd518b5ba4/pkgs/ida-pro-91/keygen3.py";
-    hash = "sha256-8UWf1RKsRNWJ8CC6ceDeIOv4eY3ybxZ9tv5MCHx80NY=";
+    url = "magnet:?xt=urn:btih:4520c7a7369ef43b7da462cabb85c44c23493158&dn=ida93&xl=4467442676&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337%2Fannounce&tr=udp%3A%2F%2Fopen.stealth.si%3A80%2Fannounce&tr=udp%3A%2F%2Ftracker.torrent.eu.org%3A451%2Fannounce&tr=http%3A%2F%2Flucke.fenesisu.moe%3A6969%2Fannounce&tr=http%3A%2F%2Ftracker.renfei.net%3A8080%2Fannounce&tr=udp%3A%2F%2Ftracker.1h.is%3A1337%2Fannounce&tr=http%3A%2F%2Fipv4.rer.lol%3A2710%2Fannounce&tr=https%3A%2F%2Ftracker.manager.v6.navy%3A443%2Fannounce&tr=udp%3A%2F%2Fopen.demonii.com%3A1337%2Fannounce&tr=udp%3A%2F%2Ftracker.tryhackx.org%3A6969%2Fannounce";
+    hash = "sha256-+nxbWSW6/X5uwc6+hzepMaaBv4wFvk/dYS/PCUyYmlo=";
   };
 
   nativeBuildInputs = [
     makeWrapper
     autoPatchelfHook
-    python3
   ];
 
   # We just get a runfile in $src, so no need to unpack it.
@@ -116,7 +109,8 @@ stdenv.mkDerivation (finalAttrs: rec {
     # thus needing to set `HOME` here.
     HOME=$out
 
-    INSTALLER="$src/ida-pro_92_x64linux.run"
+    # https://www.virustotal.com/gui/file/2ed43ae4bb84d74dcae6f0099210dfa8d61bfea4952f5f9a07a9aae16cb70f82
+    INSTALLER="$src/ida-pro_93_x64linux.run"
 
     if [ ! -f "$INSTALLER" ]; then
       echo "Error: Installer not found at $INSTALLER"
@@ -129,11 +123,13 @@ stdenv.mkDerivation (finalAttrs: rec {
     $(cat $NIX_CC/nix-support/dynamic-linker) "$INSTALLER" \
       --mode unattended --prefix $IDADIR
 
-    pushd $IDADIR
-    python $patcher
-    mv libida.so.patched libida.so
-    mv libida32.so.patched libida32.so
-    popd
+    # https://www.virustotal.com/gui/file/b60465440c1f3c7dbc52e7771479b2ee06813a770f8892bbca61a46ab1388e1d
+    # https://www.virustotal.com/gui/file/7eb70f6dc2d579cfaab7e0f006f577fed35364e640394dc86e75d4f1a357325f
+    # https://www.virustotal.com/gui/file/17985fa1a0d1bf404e19bde0a50ac712feabba0bea05f0aa8c06b8c010302596
+    install -t $IDADIR \
+      $src/kg_patch/idapro.hexlic \
+      $src/kg_patch/linux/libida.so \
+      $src/kg_patch/linux/libida32.so
 
     # move IDA remote debug servers
     mv $IDADIR/dbgsrv $out
