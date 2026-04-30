@@ -105,10 +105,11 @@
               # config.allowUnfree = true;
             };
             unstableHosts = [
-              "Index"
               "arona"
+              "homura"
+              "Index"
               "midori"
-              "nixos"
+              "sakanaa"
             ];
             nixpkgs = if builtins.elem hostname unstableHosts then nixpkgs-unstable else nixpkgs-2511;
             home-manager-nixos =
