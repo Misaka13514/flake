@@ -9,6 +9,7 @@
     roles.desktop
     diskLayouts.single-disk-ext4
     gui.suites.plasma
+    gui.obs-studio
     services.podman
     services.mdns
     services.printing

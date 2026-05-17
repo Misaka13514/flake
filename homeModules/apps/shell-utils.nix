@@ -25,10 +25,11 @@ in
   programs.git = {
     enable = true;
     settings = {
-      user.name = "Misaka13514";
+      user.name = "Rine Amakawa";
       user.email = "Misaka13514@gmail.com";
       init.defaultBranch = "main";
       commit.gpgsign = true;
+      user.signingkey = "5BA92099D9BE2DAA";
       diff.sopsdiffer.textconv = "${pkgs.sops}/bin/sops -d";
     };
   };
