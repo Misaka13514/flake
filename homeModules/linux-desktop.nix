@@ -20,17 +20,33 @@ in
   ];
 
   home.packages = with pkgs; [
+    android-studio
+    android-tools
     flakePackages.ida-pro
+    flyctl
+    frida-tools
     gimp
     hmcl
+    imagemagick
+    jadx
+    kdePackages.kdenlive
+    kdePackages.skanpage
     libreoffice-qt-fresh
-    mission-center
     mpv
+    ncdu
+    nix-update
+    nodejs
     obsidian
+    pdftk
+    pnpm
+    poppler-utils
+    python3
+    qpdf
     remmina
     rustdesk-flutter
-    telegram-desktop
+    uv
     vlc
+    wrangler
     yubioath-flutter
   ];
 
@@ -65,6 +81,7 @@ in
   };
 
   noa.nixpkgs.allowedUnfreePackages = [
+    "android-studio"
     "ida-pro"
     "obsidian"
   ];
