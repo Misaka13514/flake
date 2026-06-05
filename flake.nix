@@ -2,7 +2,7 @@
   description = "Misaka's NixOS Flake";
 
   inputs = {
-    nixpkgs-2511.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixpkgs-2605.url = "github:NixOS/nixpkgs/nixos-26.05";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
     git-hooks = {
@@ -21,13 +21,22 @@
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
-    home-manager-2511-nixos = {
-      url = "github:nix-community/home-manager/release-25.11";
-      inputs.nixpkgs.follows = "nixpkgs-2511";
+    home-manager-2605-nixos = {
+      url = "github:nix-community/home-manager/release-26.05";
+      inputs.nixpkgs.follows = "nixpkgs-2605";
     };
     home-manager-unstable-nixos = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
+    nixpkgs-darwin.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    darwin = {
+      url = "github:nix-darwin/nix-darwin";
+      inputs.nixpkgs.follows = "nixpkgs-darwin";
+    };
+    home-manager-darwin = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs-darwin";
     };
     plasma-manager = {
       url = "github:nix-community/plasma-manager";
@@ -49,13 +58,13 @@
   outputs =
     inputs@{
       self,
-      nixpkgs-2511,
+      nixpkgs-2605,
       nixpkgs-unstable,
       flake-utils,
       ...
     }:
     let
-      inherit (inputs.nixpkgs-2511) lib;
+      inherit (inputs.nixpkgs-2605) lib;
       secretsPath = ./secrets;
       assetsPath = ./assets;
 
@@ -85,11 +94,14 @@
           homeModules
           ;
       };
+      darwinMachines = [
+        "amakawa"
+      ];
     in
     {
       nixosModules = modulesFromDirectoryRecursive ./nixosModules;
 
-      # darwinModules = modulesFromDirectoryRecursive ./darwinModules;
+      darwinModules = modulesFromDirectoryRecursive ./darwinModules;
 
       homeModules = modulesFromDirectoryRecursive ./homeModules;
 
@@ -111,12 +123,12 @@
               "midori"
               "sakanaa"
             ];
-            nixpkgs = if builtins.elem hostname unstableHosts then nixpkgs-unstable else nixpkgs-2511;
+            nixpkgs = if builtins.elem hostname unstableHosts then nixpkgs-unstable else nixpkgs-2605;
             home-manager-nixos =
               if builtins.elem hostname unstableHosts then
                 inputs.home-manager-unstable-nixos
               else
-                inputs.home-manager-2511-nixos;
+                inputs.home-manager-2605-nixos;
           in
           nixpkgs.lib.nixosSystem {
             specialArgs = globalSpecialArgs // {
@@ -136,6 +148,36 @@
 
         directory = ./nixosConfigurations;
       };
+
+      darwinConfigurations = builtins.listToAttrs (
+        builtins.map (
+          hostname:
+          let
+            system = "aarch64-darwin";
+            unstablePkgs = import inputs.nixpkgs-unstable {
+              inherit system overlays;
+              config.allowUnfree = true;
+            };
+          in
+          {
+            name = hostname;
+            value = inputs.darwin.lib.darwinSystem {
+              specialArgs = globalSpecialArgs // {
+                inherit
+                  hostname
+                  system
+                  unstablePkgs
+                  overlays
+                  ;
+              };
+              modules = (builtins.attrValues self.darwinModules) ++ [
+                inputs.home-manager-darwin.darwinModules.home-manager
+                inputs.sops-nix.darwinModules.sops
+              ];
+            };
+          }
+        ) darwinMachines
+      );
 
       deploy.nodes = lib.packagesFromDirectoryRecursive {
         callPackage =

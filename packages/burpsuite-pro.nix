@@ -9,7 +9,7 @@ let
   };
 in
 (pkgs.burpsuite.override {
-  proEdition = true;
+  iconName = "pro";
 
   buildFHSEnv =
     args:

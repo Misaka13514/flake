@@ -16,6 +16,8 @@ let
     whois
     dust
     duf
+    ghq
+    gnupg
   ];
 in
 {
@@ -61,6 +63,16 @@ in
     shellInit = "set -g fish_greeting";
     interactiveShellInit = ''
       any-nix-shell fish --info-right | source
+
+      if set -q FISH_FORK_PWD_HINT
+        if test (string match -r '^/' $FISH_FORK_PWD_HINT)
+          cd $FISH_FORK_PWD_HINT
+        end
+      end
+
+      if test -x /opt/homebrew/bin/brew
+        /opt/homebrew/bin/brew shellenv | source
+      end
     '';
     shellAliases = {
       ".." = "cd ../";

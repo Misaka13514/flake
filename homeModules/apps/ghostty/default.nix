@@ -7,6 +7,7 @@
 {
   programs.ghostty = {
     enable = true;
+    package = lib.mkIf (system == "aarch64-darwin") null;
     settings = {
       # font-style = "Retina";
       # mouse-hide-while-typing = true;
