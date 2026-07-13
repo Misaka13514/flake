@@ -8,7 +8,11 @@
   ];
 
   home.packages = with pkgs; [
+    flakePackages.ninjabrain-bot
+    hmcl
     ipatool
+    vt-cli
+    yt-dlp
   ];
 
   programs.gpg = {

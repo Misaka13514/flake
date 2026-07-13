@@ -50,7 +50,7 @@ let
 
   userDataConfig = {
     hostname = vmName;
-    timezone = "Asia/Shanghai";
+    timezone = "Asia/Tokyo";
     locale = "en_US.UTF-8";
     manage_etc_hosts = true;
     ssh_pwauth = false;

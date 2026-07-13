@@ -114,6 +114,12 @@ in
     };
   };
 
+  programs.direnv = {
+    enable = true;
+    enableFishIntegration = true;
+    nix-direnv.enable = true;
+  };
+
   programs.lazygit = {
     enable = true;
   };
@@ -148,6 +154,7 @@ in
   programs.fzf = {
     enable = true;
     enableFishIntegration = true;
+    historyWidget.command = "";
   };
 
   programs.bat.enable = true;

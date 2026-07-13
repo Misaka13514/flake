@@ -4,7 +4,10 @@ self: final: prev: {
       # for fixed cache
       unstablePkgs = import self.inputs.nixpkgs-unstable {
         inherit (prev.stdenv.hostPlatform) system;
-        inherit (prev) config;
+        config = {
+          allowUnfree = prev.config.allowUnfree or false;
+          allowUnfreePredicate = prev.config.allowUnfreePredicate or (_: false);
+        };
       };
     in
     import ../lib/mkMyPackages.nix {

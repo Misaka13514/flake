@@ -50,7 +50,7 @@
     vscode-server = {
       url = "github:nix-community/nixos-vscode-server";
       inputs.flake-utils.follows = "flake-utils";
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
+      inputs.nixpkgs.follows = "nixpkgs-2605";
     };
     nix-secrets.url = "git+ssh://git@github.com/Misaka13514/nix-secrets.git?shallow=1";
   };
@@ -207,58 +207,61 @@
         };
       };
     }
-    // flake-utils.lib.eachDefaultSystem (
-      system:
-      let
-        pkgs = import inputs.nixpkgs-unstable {
-          inherit system;
-        };
-        unfreePackagesInput = import inputs.nixpkgs-unstable rec {
-          inherit system;
-          unfreePackages = [
-            "burpsuite"
-            "ida-pro"
-          ];
-          unfreePredicate = pkg: builtins.elem (lib.getName pkg) unfreePackages;
-          config.allowUnfreePredicate = unfreePredicate;
-        };
-      in
-      rec {
-        packages = import ./lib/mkMyPackages.nix {
-          pkgs = unfreePackagesInput;
-          inherit (unfreePackagesInput) lib;
-        };
-
-        checks = {
-          pre-commit-check = inputs.git-hooks.lib.${system}.run {
-            src = ./.;
-            hooks = {
-              nixfmt.enable = true;
-              statix.enable = true;
+    //
+      flake-utils.lib.eachSystem
+        (builtins.filter (s: s != "x86_64-darwin") flake-utils.lib.defaultSystems)
+        (
+          system:
+          let
+            pkgs = import inputs.nixpkgs-unstable {
+              inherit system;
             };
-          };
-        };
-        # // inputs.deploy-rs.lib."${system}".deployChecks self.deploy;
+            unfreePackagesInput = import inputs.nixpkgs-unstable rec {
+              inherit system;
+              unfreePackages = [
+                "burpsuite"
+                "ida-pro"
+              ];
+              unfreePredicate = pkg: builtins.elem (lib.getName pkg) unfreePackages;
+              config.allowUnfreePredicate = unfreePredicate;
+            };
+          in
+          rec {
+            packages = import ./lib/mkMyPackages.nix {
+              pkgs = unfreePackagesInput;
+              inherit (unfreePackagesInput) lib;
+            };
 
-        devShells.default = pkgs.mkShell {
-          packages = with pkgs; [
-            nixd
-            just
-            deploy-rs
-            nixfmt
-            ssh-to-age
-            sops
-            jq
-            openssh
-            wireguard-tools
-            git-agecrypt
-            nh
-          ];
-          inherit (checks.pre-commit-check) shellHook;
-          buildInputs = checks.pre-commit-check.enabledPackages;
-        };
+            checks = {
+              pre-commit-check = inputs.git-hooks.lib.${system}.run {
+                src = ./.;
+                hooks = {
+                  nixfmt.enable = true;
+                  statix.enable = true;
+                };
+              };
+            };
+            # // inputs.deploy-rs.lib."${system}".deployChecks self.deploy;
 
-        formatter = pkgs.nixfmt;
-      }
-    );
+            devShells.default = pkgs.mkShell {
+              packages = with pkgs; [
+                nixd
+                just
+                deploy-rs
+                nixfmt
+                ssh-to-age
+                sops
+                jq
+                openssh
+                wireguard-tools
+                git-agecrypt
+                nh
+              ];
+              inherit (checks.pre-commit-check) shellHook;
+              buildInputs = checks.pre-commit-check.enabledPackages;
+            };
+
+            formatter = pkgs.nixfmt;
+          }
+        );
 }
