@@ -17,7 +17,7 @@
   ];
 
   noa = {
-    nix.enableMirrorSubstituter = true;
+    nix.enableMirrorSubstituter = false;
     homeManager = {
       enable = true;
       modules = with homeModules; [

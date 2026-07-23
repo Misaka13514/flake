@@ -35,6 +35,7 @@ _: {
     brews = [
       "displayplacer"
       "mole"
+      "mpv"
       "opencode"
       # "jnsahaj/lumen/lumen"
       # "ollama"
@@ -57,6 +58,7 @@ _: {
       "obsidian"
       "orbstack"
       "playcover-community"
+      "resilio-sync"
       "scroll-reverser"
       "stats"
       "steam"
